@@ -1,0 +1,242 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  firstName     String
+  lastName      String
+  phone         String?
+  country       String?   // User's country
+  password      String
+  role          String    @default("STUDENT") // STUDENT, INSTRUCTOR, ADMIN, SUPER_ADMIN, SUPPORT, CONTENT_MANAGER, MODERATOR
+  avatar        String?
+  isActive      Boolean   @default(true)
+  emailVerified DateTime?
+  // Staff management fields
+  department    String?   // Department for staff members
+  supervisor    String?   // Supervisor name for staff members
+  permissions   String[]  @default([]) // Array of permission strings
+  lastLogin     DateTime? // Last login timestamp
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  resetToken        String?
+  resetTokenExpiry  DateTime?
+  // Relations
+  enrollments   Enrollment[]
+  reviews       Review[]
+  orders        Order[]
+  subscriptions Subscription[]
+  instructorCourses Course[] @relation("InstructorCourses")
+
+  @@map("users")
+}
+
+model Course {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  content     String   // Rich text content
+  thumbnail   String?
+  videoUrl    String?
+  duration    Int      // in minutes
+  price       Float
+  originalPrice Float?
+  category    String
+  level       String   @default("BEGINNER") // BEGINNER, INTERMEDIATE, ADVANCED, EXPERT
+  isPublished Boolean  @default(false)
+  isFeatured  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  instructorId String
+  instructor   User   @relation("InstructorCourses", fields: [instructorId], references: [id])
+  enrollments  Enrollment[]
+  reviews      Review[]
+  topics       Topic[]
+  tags         CourseTag[]
+
+  @@map("courses")
+}
+
+model Topic {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  order       Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  courseId    String
+  course      Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons     Lesson[]
+
+  @@map("topics")
+}
+
+model Lesson {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  content     String
+  videoUrl    String?
+  duration    Int      // in minutes
+  order       Int
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  topicId     String
+  topic       Topic   @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@map("lessons")
+}
+
+model Enrollment {
+  id        String   @id @default(cuid())
+  progress  Int      @default(0) // percentage
+  completed Boolean  @default(false)
+  enrolledAt DateTime @default(now())
+  completedAt DateTime?
+
+  // Relations
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId  String
+  course    Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@map("enrollments")
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  rating    Int      // 1-5 stars
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId  String
+  course    Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@map("reviews")
+}
+
+model Subscription {
+  id        String   @id @default(cuid())
+  plan      String   // BASIC, PREMIUM, ENTERPRISE
+  status    String   @default("ACTIVE") // ACTIVE, CANCELLED, EXPIRED, PENDING
+  startDate DateTime @default(now())
+  endDate   DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+model Order {
+  id            String   @id @default(cuid())
+  amount        Float
+  currency      String   @default("USD")
+  status        String   @default("PENDING") // PENDING, COMPLETED, FAILED, CANCELLED, REFUNDED
+  paymentMethod String?
+  transactionId String?
+  discountAmount Float   @default(0)
+  finalAmount   Float
+  couponCode    String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("orders")
+}
+
+model Coupon {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  description String?
+  discountType String  // PERCENTAGE, FIXED_AMOUNT
+  discountValue Float
+  minAmount   Float?   // Minimum order amount to apply coupon
+  maxDiscount Float?   // Maximum discount amount for percentage coupons
+  usageLimit  Int?     // Maximum number of times this coupon can be used
+  usedCount   Int      @default(0)
+  isActive    Boolean  @default(true)
+  validFrom   DateTime @default(now())
+  validUntil  DateTime?
+  // New fields for course-specific and stacking functionality
+  appliesToAllCourses Boolean @default(true) // If false, only applies to specific courses
+  allowedCourseIds    String? // Comma-separated list of course IDs (if appliesToAllCourses is false)
+  canStackWithOtherCoupons Boolean @default(false) // Whether this coupon can be used with other coupons
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("coupons")
+}
+
+model CourseTag {
+  id       String @id @default(cuid())
+  name     String @unique
+  color    String @default("#3B82F6")
+
+  // Relations
+  courses  Course[]
+
+  @@map("course_tags")
+}
+
+model SiteSettings {
+  id          String @id @default(cuid())
+  siteName    String @default("easyT.online")
+  siteDescription String?
+  primaryColor String @default("#0EA5E9")
+  secondaryColor String @default("#D946EF")
+  logo        String?
+  favicon     String?
+  contactEmail String?
+  contactPhone String?
+  address     String?
+  facebookUrl String?
+  twitterUrl  String?
+  instagramUrl String?
+  youtubeUrl  String?
+  seoTitle    String?
+  seoDescription String?
+  seoKeywords String?
+  updatedAt   DateTime @updatedAt
+
+  @@map("site_settings")
+}
+
+model Analytics {
+  id        String   @id @default(cuid())
+  pageViews Int      @default(0)
+  uniqueVisitors Int @default(0)
+  date      DateTime @default(now())
+  page      String?
+
+  @@map("analytics")
+} 

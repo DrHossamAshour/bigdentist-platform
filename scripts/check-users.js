@@ -10,7 +10,7 @@ async function main() {
     await prisma.$connect()
     console.log('✅ Connected to database')
     
-    // Get all users
+    // Get all users with more details
     const users = await prisma.user.findMany({
       select: {
         id: true,
@@ -18,6 +18,7 @@ async function main() {
         firstName: true,
         lastName: true,
         role: true,
+        password: true,
         createdAt: true
       }
     })
@@ -25,6 +26,7 @@ async function main() {
     console.log(`\n📊 Found ${users.length} users:`)
     users.forEach((user, index) => {
       console.log(`${index + 1}. ${user.firstName} ${user.lastName} (${user.email}) - Role: ${user.role}`)
+      console.log(`   Password hash: ${user.password.substring(0, 20)}...`)
     })
     
     // Check if admin user exists
@@ -34,6 +36,7 @@ async function main() {
     
     if (adminUser) {
       console.log('\n✅ Admin user exists: admin@bigdentist.com')
+      console.log(`   Password hash: ${adminUser.password.substring(0, 20)}...`)
     } else {
       console.log('\n❌ Admin user does not exist')
     }

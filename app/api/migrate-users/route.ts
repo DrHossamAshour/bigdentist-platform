@@ -3,7 +3,15 @@ import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
+export async function GET(request: NextRequest) {
+  return await migrateUsers()
+}
+
 export async function POST(request: NextRequest) {
+  return await migrateUsers()
+}
+
+async function migrateUsers() {
   try {
     console.log('🔄 Starting user migration...')
     
@@ -45,7 +53,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('❌ Migration error:', error)
     return NextResponse.json(
-      { error: 'Migration failed' },
+      { error: 'Migration failed', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
   }

@@ -4,6 +4,7 @@ export async function GET(request: NextRequest) {
   const dbUrl = process.env.DATABASE_URL
   
   return NextResponse.json({
+    timestamp: new Date().toISOString(),
     hasDatabaseUrl: !!dbUrl,
     databaseUrlLength: dbUrl ? dbUrl.length : 0,
     databaseUrlStart: dbUrl ? dbUrl.substring(0, 20) : 'NOT_SET',

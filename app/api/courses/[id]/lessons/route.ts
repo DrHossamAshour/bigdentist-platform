@@ -168,7 +168,8 @@ export async function PUT(
         description: body.description,
         content: body.content,
         videoUrl: body.videoUrl,
-        duration: parseInt(body.duration) || 0
+        duration: parseInt(body.duration) || 0,
+        isPublic: body.isPublic || false
       },
       include: {
         topic: true

@@ -39,11 +39,12 @@ interface Topic {
 interface Lesson {
   id: string
   title: string
- description: string
+  description: string
   videoUrl: string
   duration: number
   order: number
   topicId: string
+  isPublic?: boolean
 }
 
 interface Quiz {
@@ -101,7 +102,8 @@ export default function EditCoursePage() {
     description: '',
     videoUrl: '',
     duration: '',
-    topicId: ''
+    topicId: '',
+    isPublic: false
   })
 
   useEffect(() => {
@@ -296,7 +298,8 @@ export default function EditCoursePage() {
         description: lesson.description,
         videoUrl: lesson.videoUrl,
         duration: lesson.duration.toString(),
-        topicId: lesson.topicId
+        topicId: lesson.topicId,
+        isPublic: lesson.isPublic || false
       })
     } else {
       setEditingLesson(null)
@@ -305,7 +308,8 @@ export default function EditCoursePage() {
         description: '',
         videoUrl: '',
         duration: '',
-        topicId: topicId || ''
+        topicId: topicId || '',
+        isPublic: false
       })
     }
     setShowLessonModal(true)
@@ -319,7 +323,8 @@ export default function EditCoursePage() {
       description: '',
       videoUrl: '',
       duration: '',
-      topicId: ''
+      topicId: '',
+      isPublic: false
     })
   }
 
@@ -338,7 +343,8 @@ export default function EditCoursePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...lessonForm,
-          duration: parseInt(lessonForm.duration)
+          duration: parseInt(lessonForm.duration),
+          isPublic: lessonForm.isPublic
         })
       })
       
@@ -360,14 +366,15 @@ export default function EditCoursePage() {
     }
     
     try {
-      const response = await fetch(`/api/courses/${courseId}/lessons/${lessonId}`, {
+      const response = await fetch(`/api/courses/${courseId}/lessons?lessonId=${lessonId}`, {
         method: 'DELETE'
       })
       
       if (response.ok) {
         await fetchCourseContent()
       } else {
-        alert('Error deleting lesson')
+        const errorData = await response.json()
+        alert(`Error deleting lesson: ${errorData.error || 'Unknown error'}`)
       }
     } catch (err) {
       console.error('Error deleting lesson:', err)
@@ -711,6 +718,11 @@ export default function EditCoursePage() {
                                   <Play className="w-4 h-4 text-gray-400" />
                                   <span className="font-medium">{lesson.title}</span>
                                   <span className="text-sm text-gray-500">{lesson.duration} min</span>
+                                  {lesson.isPublic && (
+                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                      Public
+                                    </span>
+                                  )}
                                 </div>
                                 <div className="flex items-center space-x-2">
                                   <button className="text-blue-600 hover:text-blue-700">
@@ -924,6 +936,19 @@ export default function EditCoursePage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="15"
                 />
+              </div>
+
+              <div className="flex items-center space-x-6">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    name="isPublic"
+                    checked={lessonForm.isPublic}
+                    onChange={(e) => setLessonForm({ ...lessonForm, isPublic: e.target.checked })}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">Make this lesson publicly viewable</span>
+                </label>
               </div>
               
               <div className="flex justify-end space-x-3">

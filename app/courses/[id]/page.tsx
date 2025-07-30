@@ -23,15 +23,23 @@ interface Lesson {
   duration: number
   isCompleted: boolean
   isLocked: boolean
+  isPublic?: boolean
   videoUrl?: string
+  description?: string
+  content?: string
+  order: number
+  topicId: string
 }
 
 interface Course {
   id: string
   title: string
   description: string
-  instructor: string
-  instructorAvatar: string
+  instructor: {
+    firstName: string
+    lastName: string
+    avatar?: string
+  }
   rating: number
   reviewCount: number
   duration: number
@@ -40,11 +48,13 @@ interface Course {
   originalPrice?: number
   category: string
   level: string
-  thumbnail: string
+  thumbnail?: string
   videoUrl?: string
   content: string
   isEnrolled: boolean
   progress: number
+  avgRating?: number
+  enrollmentCount?: number
 }
 
 export default function CourseDetailPage() {
@@ -58,78 +68,96 @@ export default function CourseDetailPage() {
   const [isPlaying, setIsPlaying] = useState(false)
   const videoRef = useRef<HTMLDivElement>(null)
   const [isPaused, setIsPaused] = useState(false)
+  const [currentEmbedUrl, setCurrentEmbedUrl] = useState<string>('')
+  const [embedLoading, setEmbedLoading] = useState(false)
 
   useEffect(() => {
-    // Mock data - in real app, fetch from API
-    const mockCourse: Course = {
-      id: courseId,
-      title: 'Complete React Developer Course 2024',
-      description: 'Learn React from scratch with this comprehensive course. Build real-world projects and master modern React development.',
-      instructor: 'John Doe',
-      instructorAvatar: '👨‍💻',
-      rating: 4.8,
-      reviewCount: 1247,
-      duration: 15,
-      lessonCount: 24,
-      price: 89.99,
-      originalPrice: 199.99,
-      category: 'Programming',
-      level: 'Intermediate',
-      thumbnail: '🎨',
-      videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-      content: 'This comprehensive React course covers everything from basics to advanced concepts...',
-      isEnrolled: false,
-      progress: 0
-    }
-
-    const mockLessons: Lesson[] = [
-      {
-        id: '1',
-        title: 'Introduction to React',
-        duration: 15,
-        isCompleted: false,
-        isLocked: false,
-        videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
-      },
-      {
-        id: '2',
-        title: 'Setting up your development environment',
-        duration: 20,
-        isCompleted: false,
-        isLocked: false,
-        videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
-      },
-      {
-        id: '3',
-        title: 'Understanding JSX',
-        duration: 25,
-        isCompleted: false,
-        isLocked: true,
-        videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
-      },
-      {
-        id: '4',
-        title: 'Components and Props',
-        duration: 30,
-        isCompleted: false,
-        isLocked: true,
-        videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
-      },
-      {
-        id: '5',
-        title: 'State and Lifecycle',
-        duration: 35,
-        isCompleted: false,
-        isLocked: true,
-        videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
-      }
-    ]
-
-    setCourse(mockCourse)
-    setLessons(mockLessons)
-    setCurrentLesson(mockLessons[0])
-    setLoading(false)
+    fetchCourseData()
   }, [courseId])
+
+  const fetchCourseData = async () => {
+    try {
+      setLoading(true)
+      
+      // Fetch course details
+      const courseResponse = await fetch(`/api/courses/${courseId}`)
+      if (!courseResponse.ok) {
+        throw new Error('Course not found')
+      }
+      const courseData = await courseResponse.json()
+      
+      // Fetch lessons for this course
+      const lessonsResponse = await fetch(`/api/courses/${courseId}/lessons`)
+      let lessonsData: Lesson[] = []
+      if (lessonsResponse.ok) {
+        const rawLessons = await lessonsResponse.json()
+        // Transform lessons to match our interface
+        lessonsData = rawLessons.map((lesson: any) => {
+          const transformedLesson = {
+            id: lesson.id,
+            title: lesson.title,
+            description: lesson.description,
+            content: lesson.content,
+            videoUrl: lesson.videoUrl,
+            duration: lesson.duration,
+            order: lesson.order,
+            topicId: lesson.topicId,
+            isPublic: lesson.isPublic || false,
+            isCompleted: false, // This would come from user progress in a real app
+            isLocked: !lesson.isPublic // Locked if not public (public lessons are always unlocked)
+          }
+          console.log(`Lesson "${lesson.title}":`, {
+            isPublic: transformedLesson.isPublic,
+            isLocked: transformedLesson.isLocked,
+            videoUrl: transformedLesson.videoUrl
+          })
+          return transformedLesson
+        })
+      }
+
+      // Transform course data to match our interface
+      const transformedCourse: Course = {
+        id: courseData.id,
+        title: courseData.title,
+        description: courseData.description,
+        instructor: {
+          firstName: courseData.instructor.firstName,
+          lastName: courseData.instructor.lastName,
+          avatar: courseData.instructor.avatar
+        },
+        rating: courseData.avgRating || 0,
+        reviewCount: courseData.reviewCount || 0,
+        duration: courseData.duration,
+        lessonCount: lessonsData.length,
+        price: courseData.price,
+        originalPrice: courseData.originalPrice,
+        category: courseData.category,
+        level: courseData.level,
+        thumbnail: courseData.thumbnail,
+        videoUrl: courseData.videoUrl,
+        content: courseData.content,
+        isEnrolled: false, // This would come from enrollment status
+        progress: 0 // This would come from user progress
+      }
+
+      setCourse(transformedCourse)
+      setLessons(lessonsData)
+      if (lessonsData.length > 0) {
+        setCurrentLesson(lessonsData[0])
+      }
+      
+      // Set initial embed URL for course preview video
+      if (courseData.videoUrl) {
+        updateEmbedUrl(courseData.videoUrl)
+      }
+      
+      setLoading(false)
+    } catch (error) {
+      console.error('Error fetching course data:', error)
+    } finally {
+    setLoading(false)
+    }
+  }
 
   const handleEnroll = () => {
     // In real app, redirect to payment or enrollment API
@@ -137,14 +165,95 @@ export default function CourseDetailPage() {
   }
 
   const handleLessonClick = (lesson: Lesson) => {
-    if (!lesson.isLocked) {
-      setCurrentLesson(lesson)
-      setIsPlaying(true)
-      setIsPaused(false)
-      setTimeout(() => {
-        videoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      }, 100)
+    console.log('Lesson clicked:', lesson)
+    setCurrentLesson(lesson)
+    setIsPlaying(true)
+    setIsPaused(false)
+    
+    // Update embed URL for the selected lesson
+    updateEmbedUrl(lesson.videoUrl || course?.videoUrl || '')
+  }
+
+  const updateEmbedUrl = async (videoUrl: string) => {
+    if (!videoUrl) {
+      setCurrentEmbedUrl('')
+      return
     }
+    
+    setEmbedLoading(true)
+    try {
+      const embedUrl = await getEmbedUrl(videoUrl)
+      setCurrentEmbedUrl(embedUrl)
+      console.log('Updated embed URL:', embedUrl)
+    } catch (error) {
+      console.error('Error updating embed URL:', error)
+      setCurrentEmbedUrl('')
+    } finally {
+      setEmbedLoading(false)
+    }
+  }
+
+  // Function to convert video URLs to embed URLs
+  const getEmbedUrl = async (url: string): Promise<string> => {
+    if (!url) return ''
+    
+    console.log('Original URL:', url)
+    
+    // Handle Vimeo URLs with enhanced API support
+    if (url.includes('vimeo.com')) {
+      try {
+        // Use the new Vimeo Pro API endpoint
+        const response = await fetch('/api/vimeo/embed', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ videoUrl: url })
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          console.log('Vimeo API response:', data)
+          return data.embedUrl
+        } else {
+          console.warn('Vimeo API failed, falling back to basic embed')
+        }
+      } catch (error) {
+        console.error('Vimeo API error:', error)
+      }
+
+      // Fallback to basic Vimeo embed
+      const videoId = url.match(/vimeo\.com\/(\d+)/)?.[1] || 
+                     url.match(/vimeo\.com\/video\/(\d+)/)?.[1] ||
+                     url.match(/player\.vimeo\.com\/video\/(\d+)/)?.[1]
+      
+      console.log('Extracted video ID:', videoId)
+      
+      if (videoId) {
+        // Enhanced Vimeo Pro embed URL with authentication and privacy support
+        const embedUrl = `https://player.vimeo.com/video/${videoId}?h=auto&autoplay=0&title=0&byline=0&portrait=0&dnt=1&transparent=0`
+        console.log('Generated enhanced embed URL:', embedUrl)
+        return embedUrl
+      }
+    }
+    
+    // Handle YouTube URLs
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      const videoId = url.match(/youtube\.com\/watch\?v=([^&]+)/)?.[1] ||
+                     url.match(/youtube\.com\/embed\/([^?]+)/)?.[1] ||
+                     url.match(/youtu\.be\/([^?]+)/)?.[1]
+      
+      if (videoId) {
+        return `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`
+      }
+    }
+    
+    // If it's already an embed URL, return as is
+    if (url.includes('player.vimeo.com') || url.includes('youtube.com/embed')) {
+      return url
+    }
+    
+    return url
   }
 
   if (loading) {
@@ -193,14 +302,37 @@ export default function CourseDetailPage() {
             {/* Video Player */}
             <div ref={videoRef} className="bg-black rounded-lg overflow-hidden mb-6 relative">
               <div className="aspect-video">
-                {isPlaying && currentLesson?.videoUrl ? (
+                {(currentLesson?.videoUrl || course.videoUrl) ? (
                   <>
-                    <iframe
-                      src={currentLesson.videoUrl + (isPaused ? '' : '?autoplay=1')}
-                      title={currentLesson.title}
-                      className="w-full h-full"
-                      allowFullScreen
-                    />
+                    {embedLoading ? (
+                      <div className="w-full h-full bg-gray-900 flex items-center justify-center">
+                        <div className="text-center">
+                          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+                          <p className="text-white">Loading video...</p>
+                        </div>
+                      </div>
+                    ) : currentEmbedUrl ? (
+                      <iframe
+                        src={currentEmbedUrl + (isPlaying && !isPaused ? '&autoplay=1' : '')}
+                        title={currentLesson?.title || course.title}
+                        className="w-full h-full"
+                        allowFullScreen
+                        allow="autoplay; fullscreen; picture-in-picture"
+                        onError={(e) => {
+                          console.error('Video iframe error:', e)
+                        }}
+                        onLoad={() => {
+                          console.log('Video iframe loaded successfully')
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-900 flex items-center justify-center">
+                        <div className="text-center">
+                          <p className="text-white text-lg mb-4">Video not available</p>
+                          <p className="text-gray-400 text-sm">Please check the video URL</p>
+                        </div>
+                      </div>
+                    )}
                     {/* Play/Pause Button Overlay (simulated for iframe) */}
                     <button
                       onClick={() => setIsPaused((prev) => !prev)}
@@ -218,13 +350,7 @@ export default function CourseDetailPage() {
                   <div className="w-full h-full bg-gray-900 flex items-center justify-center">
                     <div className="text-center">
                       <div className="text-6xl mb-4">{course.thumbnail}</div>
-                      <button
-                        onClick={() => setIsPlaying(true)}
-                        className="bg-white text-black px-6 py-3 rounded-lg font-medium hover:bg-gray-100 transition-colors flex items-center mx-auto"
-                      >
-                        <Play className="w-5 h-5 mr-2" />
-                        Preview Course
-                      </button>
+                      <p className="text-white text-lg mb-4">Select a lesson to start watching</p>
                     </div>
                   </div>
                 )}
@@ -241,7 +367,7 @@ export default function CourseDetailPage() {
                   </div>
                   <div className="mt-2 md:mt-0">
                     <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
-                      {currentLesson.isLocked ? 'Locked' : 'Available'}
+                      {currentLesson.isPublic ? 'Public' : currentLesson.isLocked ? 'Locked' : 'Available'}
                     </span>
                   </div>
                 </div>
@@ -268,7 +394,7 @@ export default function CourseDetailPage() {
               <div className="flex items-center space-x-6 text-sm text-gray-600 mb-4">
                 <div className="flex items-center">
                   <User className="w-4 h-4 mr-1" />
-                  <span>{course.instructor}</span>
+                  <span>{course.instructor.firstName} {course.instructor.lastName}</span>
                 </div>
                 <div className="flex items-center">
                   <Star className="w-4 h-4 text-yellow-400 fill-current mr-1" />
@@ -311,9 +437,9 @@ export default function CourseDetailPage() {
                   <div key={lesson.id} className="relative group">
                     <button
                       onClick={() => handleLessonClick(lesson)}
-                      disabled={lesson.isLocked}
+                      disabled={lesson.isLocked && !lesson.isPublic}
                       className={`w-full text-left p-3 rounded-lg border transition-colors ${
-                        lesson.isLocked
+                        lesson.isLocked && !lesson.isPublic
                           ? 'bg-gray-50 border-gray-200 cursor-not-allowed'
                           : currentLesson?.id === lesson.id
                           ? 'bg-primary-50 border-primary-600 ring-2 ring-primary-200'
@@ -324,7 +450,7 @@ export default function CourseDetailPage() {
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
-                          {lesson.isLocked ? (
+                          {lesson.isLocked && !lesson.isPublic ? (
                             <Lock className="w-4 h-4 text-gray-400" />
                           ) : lesson.isCompleted ? (
                             <CheckCircle className="w-4 h-4 text-green-600" />
@@ -333,16 +459,23 @@ export default function CourseDetailPage() {
                           )}
                           <div>
                             <p className={`text-sm font-medium ${
-                              lesson.isLocked ? 'text-gray-500' : currentLesson?.id === lesson.id ? 'text-primary-800' : 'text-gray-900'
+                              lesson.isLocked && !lesson.isPublic ? 'text-gray-500' : currentLesson?.id === lesson.id ? 'text-primary-800' : 'text-gray-900'
                             }`}>
                               {index + 1}. {lesson.title}
                             </p>
+                            <div className="flex items-center space-x-2">
                             <p className="text-xs text-gray-500">{lesson.duration} min</p>
+                              {lesson.isPublic && (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                  Public
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
                     </button>
-                    {lesson.isLocked && (
+                    {lesson.isLocked && !lesson.isPublic && (
                       <div className="absolute left-1/2 -top-2 -translate-x-1/2 -translate-y-full z-20 hidden group-hover:block pointer-events-none">
                         <div className="bg-black text-white text-xs rounded px-3 py-2 shadow-lg whitespace-nowrap">
                           You must enroll in the course to watch this lesson.

@@ -143,17 +143,24 @@ export default function CourseDetailPage() {
       setCourse(transformedCourse)
       setLessons(lessonsData)
       
-      // Auto-select first lesson and load its video
+      // Auto-select first available lesson and load its video
       if (lessonsData.length > 0) {
-        const firstLesson = lessonsData[0]
-        setCurrentLesson(firstLesson)
-        setIsPlaying(true)
+        // Find the first available lesson (public or unlocked)
+        const firstAvailableLesson = lessonsData.find(lesson => lesson.isPublic || !lesson.isLocked)
         
-        // Load the first lesson's video immediately
-        if (firstLesson.videoUrl) {
-          updateEmbedUrl(firstLesson.videoUrl)
+        if (firstAvailableLesson) {
+          setCurrentLesson(firstAvailableLesson)
+          setIsPlaying(true)
+          
+          // Load the first available lesson's video immediately
+          if (firstAvailableLesson.videoUrl) {
+            updateEmbedUrl(firstAvailableLesson.videoUrl)
+          } else if (courseData.videoUrl) {
+            // Fallback to course preview video
+            updateEmbedUrl(courseData.videoUrl)
+          }
         } else if (courseData.videoUrl) {
-          // Fallback to course preview video
+          // If no available lessons, load course preview video
           updateEmbedUrl(courseData.videoUrl)
         }
       } else if (courseData.videoUrl) {

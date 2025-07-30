@@ -142,12 +142,22 @@ export default function CourseDetailPage() {
 
       setCourse(transformedCourse)
       setLessons(lessonsData)
-      if (lessonsData.length > 0) {
-        setCurrentLesson(lessonsData[0])
-      }
       
-      // Set initial embed URL for course preview video
-      if (courseData.videoUrl) {
+      // Auto-select first lesson and load its video
+      if (lessonsData.length > 0) {
+        const firstLesson = lessonsData[0]
+        setCurrentLesson(firstLesson)
+        setIsPlaying(true)
+        
+        // Load the first lesson's video immediately
+        if (firstLesson.videoUrl) {
+          updateEmbedUrl(firstLesson.videoUrl)
+        } else if (courseData.videoUrl) {
+          // Fallback to course preview video
+          updateEmbedUrl(courseData.videoUrl)
+        }
+      } else if (courseData.videoUrl) {
+        // If no lessons, load course preview video
         updateEmbedUrl(courseData.videoUrl)
       }
       

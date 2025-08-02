@@ -136,16 +136,24 @@ export function isLoggedIn(): boolean {
   try {
     // Check localStorage first
     const localStorageLogin = localStorage.getItem('isLoggedIn') === 'true'
-    const hasUserData = localStorage.getItem('userData') !== null
+    const userData = localStorage.getItem('userData')
+    const hasUserData = userData !== null && userData !== 'null' && userData !== 'undefined'
     
     // Check cookies
     const hasAuthToken = document.cookie.includes('auth-token=')
     
-    console.log('Login check:', { localStorageLogin, hasAuthToken, hasUserData })
+    console.log('Login check:', { localStorageLogin, hasAuthToken, hasUserData, userData })
     
-    // If any of these indicate login, return true
-    if (localStorageLogin || hasAuthToken || hasUserData) {
+    // Only return true if we have both localStorage login flag AND either userData or auth token
+    if (localStorageLogin && (hasUserData || hasAuthToken)) {
       return true
+    }
+    
+    // If localStorage says logged in but no actual data, clear the invalid state
+    if (localStorageLogin && !hasUserData && !hasAuthToken) {
+      console.log('Clearing invalid login state')
+      localStorage.removeItem('isLoggedIn')
+      localStorage.removeItem('userData')
     }
     
     return false
@@ -159,34 +167,52 @@ export function handleLogout(): void {
   console.log('Logging out - clearing all auth data...')
   
   try {
-    // Clear all possible auth tokens from cookies
+    // Clear all possible auth tokens from cookies with multiple methods
     document.cookie = "auth-token=; Max-Age=0; path=/; domain=; secure; samesite=strict";
     document.cookie = "auth-token=; Max-Age=0; path=/";
     document.cookie = "auth-token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+    document.cookie = "auth-token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=";
+    
+    // Clear all possible cookie variations
+    document.cookie.split(";").forEach(function(c) { 
+      document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+    });
     
     // Clear all localStorage auth data
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('userData');
     localStorage.removeItem('auth-token');
     localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    localStorage.removeItem('session');
+    localStorage.removeItem('auth');
+    localStorage.removeItem('login');
     
     // Clear sessionStorage as well
     sessionStorage.removeItem('isLoggedIn');
     sessionStorage.removeItem('userData');
     sessionStorage.removeItem('auth-token');
     sessionStorage.removeItem('user');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('session');
+    sessionStorage.removeItem('auth');
+    sessionStorage.removeItem('login');
+    
+    // Clear any other possible auth-related items
+    localStorage.clear();
+    sessionStorage.clear();
     
     console.log('Auth data cleared. Current state:')
     console.log('- localStorage isLoggedIn:', localStorage.getItem('isLoggedIn'))
     console.log('- localStorage userData:', localStorage.getItem('userData'))
     console.log('- cookies:', document.cookie)
     
-    // Force a page reload to clear any cached state
-    window.location.href = "/login";
+    // Force a complete page reload to clear any cached state
+    window.location.replace("/login");
   } catch (error) {
     console.error('Error during logout:', error)
-    // Fallback: force redirect to login
-    window.location.href = "/login";
+    // Fallback: force redirect to login with page reload
+    window.location.replace("/login");
   }
 }
 
@@ -231,5 +257,34 @@ export function forceLogoutCheck(): void {
     if (currentPath.startsWith('/dashboard') || currentPath.startsWith('/admin') || currentPath.startsWith('/instructor')) {
       window.location.href = "/login";
     }
+  }
+} 
+
+// Function to manually clear all auth data (for debugging)
+export function manualClearAuth(): void {
+  console.log('Manual auth clear - clearing all auth data...')
+  
+  try {
+    // Clear all cookies
+    document.cookie.split(";").forEach(function(c) { 
+      document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+    });
+    
+    // Clear all localStorage
+    localStorage.clear();
+    
+    // Clear all sessionStorage
+    sessionStorage.clear();
+    
+    console.log('Manual auth clear completed')
+    console.log('- localStorage:', localStorage)
+    console.log('- sessionStorage:', sessionStorage)
+    console.log('- cookies:', document.cookie)
+    
+    // Force page reload
+    window.location.reload();
+  } catch (error) {
+    console.error('Error during manual auth clear:', error)
+    window.location.reload();
   }
 } 

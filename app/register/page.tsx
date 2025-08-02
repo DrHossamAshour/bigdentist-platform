@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowRight, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { setUserData } from '@/lib/auth'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -330,7 +331,7 @@ export default function RegisterPage() {
       }
 
       toast.success('Registration successful! Redirecting to dashboard...')
-      localStorage.setItem('isLoggedIn', 'true');
+      setUserData(data.user)
       // Redirect based on user role
       if (data.user.role === 'ADMIN' || data.user.role === 'SUPER_ADMIN') {
         router.push('/admin')

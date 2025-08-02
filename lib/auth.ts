@@ -71,44 +71,80 @@ export const authenticateUser = async (email: string, password: string) => {
 } 
 
 export function getUserRole(): string | null {
-  if (typeof document === "undefined") return null;
+  if (typeof window === "undefined") return null;
   
   try {
+    // First try to get role from localStorage (more reliable)
+    const userData = localStorage.getItem('userData')
+    if (userData) {
+      const parsed = JSON.parse(userData)
+      console.log('User data from localStorage:', parsed)
+      if (parsed.role) {
+        console.log('User role from localStorage:', parsed.role)
+        return parsed.role
+      }
+    }
+    
+    // Fallback to JWT token from cookies
     const match = document.cookie.match(/auth-token=([^;]+)/)
     if (match) {
       const token = match[1]
       console.log('Found auth token, decoding...')
       const decoded = jwtDecode(token) as { role?: string }
       console.log('Decoded token:', decoded)
-      console.log('User role:', decoded.role)
+      console.log('User role from JWT:', decoded.role)
       return decoded.role || null
     } else {
       console.log('No auth token found in cookies')
     }
   } catch (e) {
-    console.error('Error decoding JWT token:', e)
+    console.error('Error getting user role:', e)
   }
   return null
 }
 
 export function getDashboardUrl(): string {
   const role = getUserRole()
+  console.log('Getting dashboard URL for role:', role)
+  
   if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
+    console.log('Returning admin dashboard URL')
     return '/admin'
   } else if (role === 'INSTRUCTOR') {
+    console.log('Returning instructor dashboard URL')
     return '/instructor/dashboard'
+  } else {
+    console.log('Returning student dashboard URL')
+    return '/dashboard'
   }
-  return '/dashboard'
 }
 
 export function isLoggedIn(): boolean {
   if (typeof window === "undefined") return false;
-  return localStorage.getItem('isLoggedIn') === 'true';
+  
+  // Check both localStorage and cookies
+  const localStorageLogin = localStorage.getItem('isLoggedIn') === 'true'
+  const hasAuthToken = document.cookie.includes('auth-token=')
+  const hasUserData = localStorage.getItem('userData') !== null
+  
+  console.log('Login check:', { localStorageLogin, hasAuthToken, hasUserData })
+  
+  return localStorageLogin || hasAuthToken || hasUserData
 }
 
 export function handleLogout(): void {
   // Remove the auth-token cookie
   document.cookie = "auth-token=; Max-Age=0; path=/";
   localStorage.removeItem('isLoggedIn');
+  localStorage.removeItem('userData');
   window.location.href = "/login";
+}
+
+// New function to set user data after login
+export function setUserData(userData: { id: string; email: string; role: string; firstName: string; lastName: string }) {
+  if (typeof window === "undefined") return;
+  
+  localStorage.setItem('isLoggedIn', 'true')
+  localStorage.setItem('userData', JSON.stringify(userData))
+  console.log('User data set:', userData)
 } 

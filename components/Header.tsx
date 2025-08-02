@@ -18,24 +18,34 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [loggedIn, setLoggedIn] = useState<boolean | undefined>(undefined)
   const [clientPath, setClientPath] = useState<string | undefined>(undefined)
+  const [dashboardUrl, setDashboardUrl] = useState<string>('/dashboard')
+  const [userRole, setUserRole] = useState<string | null>(null)
   const pathname = usePathname()
 
   useEffect(() => {
-    setLoggedIn(isLoggedIn())
-    setClientPath(window.location.pathname)
+    const checkAuth = () => {
+      const isUserLoggedIn = isLoggedIn()
+      const role = getUserRole()
+      const url = getDashboardUrl()
+      
+      setLoggedIn(isUserLoggedIn)
+      setUserRole(role)
+      setDashboardUrl(url)
+      setClientPath(window.location.pathname)
+      
+      // Debug logging
+      console.log('Header - loggedIn:', isUserLoggedIn)
+      console.log('Header - dashboardUrl:', url)
+      console.log('Header - user role:', role)
+    }
+    
+    checkAuth()
+    
+    // Check again after a short delay to ensure localStorage is updated
+    const timer = setTimeout(checkAuth, 100)
+    
+    return () => clearTimeout(timer)
   }, [pathname]);
-
-  // Calculate dashboard URL dynamically
-  const dashboardUrl = getDashboardUrl()
-  
-  // Debug logging
-  console.log('Header - loggedIn:', loggedIn)
-  console.log('Header - dashboardUrl:', dashboardUrl)
-  console.log('Header - user role:', getUserRole())
-
-  if (loggedIn === undefined || clientPath === undefined) {
-    return null // Wait for client check
-  }
   
   // Normalize pathname: remove trailing slash
   const cleanPath = typeof clientPath === 'string' ? clientPath.replace(/\/$/, '') : ''
@@ -116,7 +126,7 @@ export default function Header() {
                   href={dashboardUrl}
                   className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 >
-                  Go to Dashboard ({getUserRole() || 'Unknown'})
+                  Go to Dashboard ({userRole || 'Unknown'})
                 </Link>
                 <button
                   onClick={handleLogout}
@@ -177,7 +187,7 @@ export default function Header() {
                       className="bg-primary-600 hover:bg-primary-700 text-white block w-full text-left px-3 py-2 rounded-lg text-base font-medium"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      Go to Dashboard ({getUserRole() || 'Unknown'})
+                      Go to Dashboard ({userRole || 'Unknown'})
                     </Link>
                     <button
                       onClick={handleLogout}

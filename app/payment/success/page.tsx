@@ -20,7 +20,16 @@ export default function PaymentSuccessPage() {
   const sessionId = searchParams.get('session_id')
 
   useEffect(() => {
-    setDashboardUrl(getDashboardUrl())
+    const checkDashboardUrl = () => {
+      const url = getDashboardUrl()
+      setDashboardUrl(url)
+      console.log('Payment Success - dashboardUrl:', url)
+    }
+    
+    checkDashboardUrl()
+    
+    // Check again after a short delay to ensure localStorage is updated
+    const timer = setTimeout(checkDashboardUrl, 100)
     
     // Mock course data - in real app, fetch from API using session_id
     setCourseData({
@@ -29,6 +38,8 @@ export default function PaymentSuccessPage() {
       instructor: 'Dr. Sarah Johnson',
       price: 299
     })
+    
+    return () => clearTimeout(timer)
   }, [])
 
   return (

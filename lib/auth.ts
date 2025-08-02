@@ -203,11 +203,20 @@ export function setUserData(userData: { id: string; email: string; role: string;
 export function forceLogoutCheck(): void {
   if (typeof window === "undefined") return;
   
+  // Only check on dashboard/admin pages, not on public pages like homepage
+  const currentPath = window.location.pathname
+  const isPublicPage = currentPath === '/' || currentPath === '/login' || currentPath === '/register' || currentPath === '/about' || currentPath === '/courses'
+  
+  if (isPublicPage) {
+    // Don't force logout on public pages - let people browse freely
+    return
+  }
+  
   const isUserLoggedIn = isLoggedIn()
-  console.log('Force logout check - isLoggedIn:', isUserLoggedIn)
+  console.log('Force logout check - isLoggedIn:', isUserLoggedIn, 'on path:', currentPath)
   
   if (!isUserLoggedIn) {
-    console.log('User not logged in, clearing any remaining auth data...')
+    console.log('User not logged in on protected page, clearing any remaining auth data...')
     // Clear any remaining auth data
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('userData');
@@ -218,8 +227,8 @@ export function forceLogoutCheck(): void {
     sessionStorage.removeItem('auth-token');
     sessionStorage.removeItem('user');
     
-    // Redirect to login if not already there
-    if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+    // Only redirect to login if on a protected page
+    if (currentPath.startsWith('/dashboard') || currentPath.startsWith('/admin') || currentPath.startsWith('/instructor')) {
       window.location.href = "/login";
     }
   }

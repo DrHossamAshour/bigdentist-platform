@@ -24,9 +24,6 @@ export default function Header() {
 
   useEffect(() => {
     const checkAuth = () => {
-      // Force logout check first
-      forceLogoutCheck()
-      
       const isUserLoggedIn = isLoggedIn()
       const role = getUserRole()
       const url = getDashboardUrl()

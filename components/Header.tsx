@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { Menu, X, BookOpen, Users, Star, Home } from 'lucide-react'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { isLoggedIn, getDashboardUrl, handleLogout, getUserRole } from '@/lib/auth'
+import { isLoggedIn, getDashboardUrl, handleLogout, getUserRole, forceLogoutCheck } from '@/lib/auth'
 
 const navigation = [
   { name: 'Home', href: '/', icon: Home },
@@ -24,6 +24,9 @@ export default function Header() {
 
   useEffect(() => {
     const checkAuth = () => {
+      // Force logout check first
+      forceLogoutCheck()
+      
       const isUserLoggedIn = isLoggedIn()
       const role = getUserRole()
       const url = getDashboardUrl()

@@ -156,11 +156,38 @@ export function isLoggedIn(): boolean {
 }
 
 export function handleLogout(): void {
-  // Remove the auth-token cookie
-  document.cookie = "auth-token=; Max-Age=0; path=/";
-  localStorage.removeItem('isLoggedIn');
-  localStorage.removeItem('userData');
-  window.location.href = "/login";
+  console.log('Logging out - clearing all auth data...')
+  
+  try {
+    // Clear all possible auth tokens from cookies
+    document.cookie = "auth-token=; Max-Age=0; path=/; domain=; secure; samesite=strict";
+    document.cookie = "auth-token=; Max-Age=0; path=/";
+    document.cookie = "auth-token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+    
+    // Clear all localStorage auth data
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('userData');
+    localStorage.removeItem('auth-token');
+    localStorage.removeItem('user');
+    
+    // Clear sessionStorage as well
+    sessionStorage.removeItem('isLoggedIn');
+    sessionStorage.removeItem('userData');
+    sessionStorage.removeItem('auth-token');
+    sessionStorage.removeItem('user');
+    
+    console.log('Auth data cleared. Current state:')
+    console.log('- localStorage isLoggedIn:', localStorage.getItem('isLoggedIn'))
+    console.log('- localStorage userData:', localStorage.getItem('userData'))
+    console.log('- cookies:', document.cookie)
+    
+    // Force a page reload to clear any cached state
+    window.location.href = "/login";
+  } catch (error) {
+    console.error('Error during logout:', error)
+    // Fallback: force redirect to login
+    window.location.href = "/login";
+  }
 }
 
 // New function to set user data after login
@@ -170,4 +197,30 @@ export function setUserData(userData: { id: string; email: string; role: string;
   localStorage.setItem('isLoggedIn', 'true')
   localStorage.setItem('userData', JSON.stringify(userData))
   console.log('User data set:', userData)
+}
+
+// Function to force logout check and redirect if needed
+export function forceLogoutCheck(): void {
+  if (typeof window === "undefined") return;
+  
+  const isUserLoggedIn = isLoggedIn()
+  console.log('Force logout check - isLoggedIn:', isUserLoggedIn)
+  
+  if (!isUserLoggedIn) {
+    console.log('User not logged in, clearing any remaining auth data...')
+    // Clear any remaining auth data
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('userData');
+    localStorage.removeItem('auth-token');
+    localStorage.removeItem('user');
+    sessionStorage.removeItem('isLoggedIn');
+    sessionStorage.removeItem('userData');
+    sessionStorage.removeItem('auth-token');
+    sessionStorage.removeItem('user');
+    
+    // Redirect to login if not already there
+    if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+      window.location.href = "/login";
+    }
+  }
 } 

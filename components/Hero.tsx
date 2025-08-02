@@ -760,25 +760,6 @@ export default function Hero() {
                 ))}
               </div>
             )}
-
-            {/* Enhanced keyboard navigation hint */}
-            <div className="text-center mt-6 text-xs text-gray-500">
-              <p className="flex items-center justify-center gap-4">
-                <span className="flex items-center gap-1">
-                  <kbd className="px-2 py-1 bg-gray-100 rounded text-xs">←</kbd>
-                  <kbd className="px-2 py-1 bg-gray-100 rounded text-xs">→</kbd>
-                  Navigate
-                </span>
-                <span className="flex items-center gap-1">
-                  <kbd className="px-2 py-1 bg-gray-100 rounded text-xs">Space</kbd>
-                  Pause/Resume
-                </span>
-                <span className="flex items-center gap-1">
-                  <kbd className="px-2 py-1 bg-gray-100 rounded text-xs">Drag</kbd>
-                  Swipe
-                </span>
-              </p>
-            </div>
           </div>
         </div>
       </section>

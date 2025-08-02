@@ -51,19 +51,36 @@ export default function Dashboard() {
   const router = useRouter()
 
   useEffect(() => {
-    // Check user role from JWT in auth-token cookie
-    if (typeof document !== 'undefined') {
+    // Check user role from localStorage first, then JWT token
+    if (typeof window !== 'undefined') {
+      // Check localStorage first (more reliable)
+      const userData = localStorage.getItem('userData')
+      if (userData) {
+        try {
+          const parsed = JSON.parse(userData)
+          if (parsed.role === 'ADMIN' || parsed.role === 'SUPER_ADMIN') {
+            console.log('Admin detected in localStorage, redirecting to /admin')
+            router.replace('/admin')
+            return
+          }
+        } catch (e) {
+          console.error('Error parsing userData:', e)
+        }
+      }
+      
+      // Fallback to JWT token from cookies
       const match = document.cookie.match(/auth-token=([^;]+)/)
       if (match) {
         try {
           const token = match[1]
           const decoded = jwtDecode(token) as { role?: string }
           if (decoded.role === 'ADMIN' || decoded.role === 'SUPER_ADMIN') {
+            console.log('Admin detected in JWT, redirecting to /admin')
             router.replace('/admin')
             return
           }
         } catch (e) {
-          // ignore
+          console.error('Error decoding JWT:', e)
         }
       }
     }

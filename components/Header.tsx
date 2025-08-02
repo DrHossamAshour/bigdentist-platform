@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Menu, X, BookOpen, Users, Star, Home } from 'lucide-react'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
+import { isLoggedIn, getDashboardUrl, handleLogout } from '@/lib/auth'
 
 const navigation = [
   { name: 'Home', href: '/', icon: Home },
@@ -13,27 +14,17 @@ const navigation = [
   { name: 'Subscriptions', href: '/subscriptions', icon: Star },
 ]
 
-function isLoggedIn() {
-  if (typeof window === "undefined") return false;
-  return localStorage.getItem('isLoggedIn') === 'true';
-}
-
-function handleLogout() {
-  // Remove the auth-token cookie
-  document.cookie = "auth-token=; Max-Age=0; path=/";
-  localStorage.removeItem('isLoggedIn');
-  window.location.href = "/login";
-}
-
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [loggedIn, setLoggedIn] = useState<boolean | undefined>(undefined)
   const [clientPath, setClientPath] = useState<string | undefined>(undefined)
+  const [dashboardUrl, setDashboardUrl] = useState<string>('/dashboard')
   const pathname = usePathname()
 
   useEffect(() => {
     setLoggedIn(isLoggedIn())
     setClientPath(window.location.pathname)
+    setDashboardUrl(getDashboardUrl())
   }, [pathname]);
 
   if (loggedIn === undefined || clientPath === undefined) {
@@ -116,7 +107,7 @@ export default function Header() {
             {loggedIn ? (
               <>
                 <Link 
-                  href="/dashboard"
+                  href={dashboardUrl}
                   className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 >
                   Go to Dashboard
@@ -176,7 +167,7 @@ export default function Header() {
                 {loggedIn ? (
                   <>
                     <Link 
-                      href="/dashboard"
+                      href={dashboardUrl}
                       className="bg-primary-600 hover:bg-primary-700 text-white block w-full text-left px-3 py-2 rounded-lg text-base font-medium"
                       onClick={() => setIsMenuOpen(false)}
                     >

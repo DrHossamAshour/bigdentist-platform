@@ -1,47 +1,35 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
-import { CheckCircle, Play, Download, BookOpen, ArrowRight } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import toast from 'react-hot-toast'
+import { CheckCircle, Play, Download, BookOpen, ArrowRight } from 'lucide-react'
+import { getDashboardUrl } from '@/lib/auth'
+
+interface CourseData {
+  courseId: string
+  title: string
+  instructor: string
+  price: number
+}
 
 export default function PaymentSuccessPage() {
+  const [courseData, setCourseData] = useState<CourseData | null>(null)
+  const [dashboardUrl, setDashboardUrl] = useState<string>('/dashboard')
   const searchParams = useSearchParams()
-  const router = useRouter()
   const sessionId = searchParams.get('session_id')
-  const [loading, setLoading] = useState(true)
-  const [courseData, setCourseData] = useState<any>(null)
 
   useEffect(() => {
-    if (sessionId) {
-      // In real app, verify the session with Stripe and get course details
-      // For now, we'll use mock data
-      setTimeout(() => {
-        setCourseData({
-          title: 'Complete React Developer Course 2024',
-          instructor: 'John Doe',
-          price: 89.99,
-          courseId: '1'
-        })
-        setLoading(false)
-        toast.success('Payment successful! You are now enrolled.')
-      }, 2000)
-    } else {
-      router.push('/courses')
-    }
-  }, [sessionId, router])
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Processing your payment...</p>
-        </div>
-      </div>
-    )
-  }
+    setDashboardUrl(getDashboardUrl())
+    
+    // Mock course data - in real app, fetch from API using session_id
+    setCourseData({
+      courseId: '1',
+      title: 'Advanced Dental Techniques',
+      instructor: 'Dr. Sarah Johnson',
+      price: 299
+    })
+  }, [])
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -121,7 +109,7 @@ export default function PaymentSuccessPage() {
               Start Learning Now
             </Link>
             <Link
-              href="/dashboard"
+              href={dashboardUrl}
               className="w-full border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-3 px-6 rounded-lg transition-colors flex items-center justify-center"
             >
               <ArrowRight className="w-5 h-5 mr-2" />

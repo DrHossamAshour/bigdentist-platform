@@ -331,7 +331,14 @@ export default function RegisterPage() {
 
       toast.success('Registration successful! Redirecting to dashboard...')
       localStorage.setItem('isLoggedIn', 'true');
-      router.push('/dashboard')
+      // Redirect based on user role
+      if (data.user.role === 'ADMIN' || data.user.role === 'SUPER_ADMIN') {
+        router.push('/admin')
+      } else if (data.user.role === 'INSTRUCTOR') {
+        router.push('/instructor/dashboard')
+      } else {
+        router.push('/dashboard')
+      }
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Registration failed. Please try again.')
     } finally {

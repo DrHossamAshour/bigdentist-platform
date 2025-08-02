@@ -30,19 +30,63 @@ class VimeoAPI {
 
   // Extract video ID from Vimeo URL
   extractVideoId(url: string): string | null {
+    // First, decode HTML entities and normalize the URL
+    const normalizedUrl = this.normalizeVimeoUrl(url)
+    
     const patterns = [
       /vimeo\.com\/(\d+)/,
       /vimeo\.com\/video\/(\d+)/,
-      /player\.vimeo\.com\/video\/(\d+)/
+      /player\.vimeo\.com\/video\/(\d+)/,
+      /vimeo\.com\/(\d+)\/[a-zA-Z0-9]+/, // Format: vimeo.com/ID/hash
+      /player\.vimeo\.com\/video\/(\d+)\?.*/ // Format: player.vimeo.com/video/ID?params
     ]
 
     for (const pattern of patterns) {
-      const match = url.match(pattern)
+      const match = normalizedUrl.match(pattern)
       if (match) {
         return match[1]
       }
     }
     return null
+  }
+
+  // Normalize Vimeo URL by decoding HTML entities and cleaning up
+  normalizeVimeoUrl(url: string): string {
+    // Decode HTML entities
+    let normalized = url
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&nbsp;/g, ' ')
+    
+    // Remove any trailing parameters that might interfere
+    // Keep only the essential parts for video ID extraction
+    if (normalized.includes('player.vimeo.com/video/')) {
+      // For player URLs, keep only up to the video ID
+      const match = normalized.match(/(player\.vimeo\.com\/video\/\d+)/)
+      if (match) {
+        normalized = match[1]
+      }
+    }
+    
+    return normalized
+  }
+
+  // Convert any Vimeo URL to a standard embed URL
+  convertToEmbedUrl(url: string): string | null {
+    const videoId = this.extractVideoId(url)
+    if (!videoId) {
+      return null
+    }
+    
+    return this.getEmbedUrl(videoId, {
+      autoplay: false,
+      muted: false,
+      controls: true,
+      responsive: true
+    })
   }
 
   // Validate if a URL is a valid Vimeo link
@@ -122,22 +166,74 @@ class VimeoAPI {
     }
   }
 
-  // Get embed URL for a video
+  // Get embed URL for a video with protection settings
   getEmbedUrl(videoId: string, options: {
     autoplay?: boolean
     muted?: boolean
     controls?: boolean
     responsive?: boolean
+    protected?: boolean // New option for protected content
+    domain?: string // Domain restriction
   } = {}): string {
     const params = new URLSearchParams()
     
+    // Basic player settings
     if (options.autoplay) params.append('autoplay', '1')
     if (options.muted) params.append('muted', '1')
     if (options.controls !== false) params.append('controls', '1')
     if (options.responsive !== false) params.append('responsive', '1')
 
+    // Protection settings for course content
+    if (options.protected !== false) {
+      // Remove Vimeo branding
+      params.append('badge', '0')
+      params.append('title', '0')
+      params.append('byline', '0')
+      params.append('portrait', '0')
+      
+      // Disable sharing and social features
+      params.append('dnt', '1') // Do Not Track
+      params.append('transparent', '0')
+      
+      // Disable autopause (prevents interference)
+      params.append('autopause', '0')
+      
+      // Disable downloads and right-click
+      params.append('download', '0') // Disable download button
+      params.append('pip', '0') // Disable picture-in-picture
+      params.append('fullscreen', '0') // Disable fullscreen (optional)
+      
+      // Add domain restriction if specified
+      if (options.domain) {
+        params.append('domain', options.domain)
+      } else {
+        // Default domain restrictions for common deployment domains
+        params.append('domain', 'localhost')
+        params.append('domain', 'bigdentist-platform.vercel.app')
+        params.append('domain', 'vercel.app')
+        params.append('domain', 'netlify.app')
+      }
+    }
+
     const queryString = params.toString()
     return `https://player.vimeo.com/video/${videoId}${queryString ? `?${queryString}` : ''}`
+  }
+
+  // Convert any Vimeo URL to a protected embed URL for course content
+  convertToProtectedEmbedUrl(url: string, domain?: string): string | null {
+    const videoId = this.extractVideoId(url)
+    if (!videoId) {
+      return null
+    }
+    
+    return this.getEmbedUrl(videoId, {
+      autoplay: false,
+      muted: false,
+      controls: true,
+      responsive: true,
+      protected: true, // Enable protection
+      domain: domain
+    })
   }
 
   // Format duration from seconds to MM:SS or HH:MM:SS

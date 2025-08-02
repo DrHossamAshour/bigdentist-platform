@@ -1,6 +1,97 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { verifyToken } from '@/lib/auth'
+
+// Mock data for topics - in a real app, this would come from the database
+let mockTopics = [
+  {
+    id: '1',
+    title: 'Atrophic jaw dilemma and chasing the bone',
+    description: 'Understanding the challenges of atrophic jaw and bone grafting techniques',
+    order: 1,
+    courseId: 'cmdtim0et0001q2766rwh3xm7',
+    lessons: [
+      {
+        id: '1',
+        title: 'Introduction to Atrophic Jaw',
+        description: 'Overview of atrophic jaw conditions',
+        videoUrl: 'https://player.vimeo.com/video/1070508363?h=b969c1efa6&badge=0&title=0&byline=0&portrait=0&dnt=1&autopause=0&download=0&pip=0&fullscreen=0',
+        duration: 15,
+        order: 1,
+        topicId: '1'
+      },
+      {
+        id: '2',
+        title: 'Bone Grafting Techniques',
+        description: 'Advanced bone grafting methods',
+        videoUrl: 'https://player.vimeo.com/video/1070508363?h=b969c1efa6&badge=0&title=0&byline=0&portrait=0&dnt=1&autopause=0&download=0&pip=0&fullscreen=0',
+        duration: 20,
+        order: 2,
+        topicId: '1'
+      },
+      {
+        id: '3',
+        title: 'Case Studies',
+        description: 'Real-world applications and outcomes',
+        videoUrl: 'https://player.vimeo.com/video/456789123?badge=0&title=0&byline=0&portrait=0&dnt=1&autopause=0&download=0&pip=0&fullscreen=0',
+        duration: 25,
+        order: 3,
+        topicId: '1'
+      }
+    ]
+  },
+  {
+    id: '2',
+    title: 'Planing',
+    description: 'Comprehensive planning strategies for complex cases',
+    order: 2,
+    courseId: 'cmdtim0et0001q2766rwh3xm7',
+    lessons: [
+      {
+        id: '4',
+        title: 'Treatment Planning Basics',
+        description: 'Fundamentals of treatment planning',
+        videoUrl: 'https://player.vimeo.com/video/111222333?badge=0&title=0&byline=0&portrait=0&dnt=1&autopause=0&download=0&pip=0&fullscreen=0',
+        duration: 18,
+        order: 1,
+        topicId: '2'
+      }
+    ]
+  },
+  {
+    id: '3',
+    title: 'Applied',
+    description: 'Practical applications and hands-on techniques',
+    order: 3,
+    courseId: 'cmdtim0et0001q2766rwh3xm7',
+    lessons: []
+  },
+  {
+    id: '4',
+    title: 'Serious Webinar (10 hours)',
+    description: 'Comprehensive webinar covering advanced topics',
+    order: 4,
+    courseId: 'cmdtim0et0001q2766rwh3xm7',
+    lessons: [
+      {
+        id: '5',
+        title: 'Advanced Techniques Part 1',
+        description: 'First part of advanced techniques',
+        videoUrl: 'https://player.vimeo.com/video/444555666?badge=0&title=0&byline=0&portrait=0&dnt=1&autopause=0&download=0&pip=0&fullscreen=0',
+        duration: 60,
+        order: 1,
+        topicId: '4'
+      },
+      {
+        id: '6',
+        title: 'Advanced Techniques Part 2',
+        description: 'Second part of advanced techniques',
+        videoUrl: 'https://player.vimeo.com/video/777888999?badge=0&title=0&byline=0&portrait=0&dnt=1&autopause=0&download=0&pip=0&fullscreen=0',
+        duration: 60,
+        order: 2,
+        topicId: '4'
+      }
+    ]
+  }
+]
 
 export async function GET(
   request: NextRequest,
@@ -8,18 +99,11 @@ export async function GET(
 ) {
   try {
     const courseId = params.id
-
-    const topics = await prisma.topic.findMany({
-      where: { courseId },
-      include: {
-        lessons: {
-          orderBy: { order: 'asc' }
-        }
-      },
-      orderBy: { order: 'asc' }
-    })
-
-    return NextResponse.json(topics)
+    
+    // Filter topics for this specific course
+    const courseTopics = mockTopics.filter(topic => topic.courseId === courseId)
+    
+    return NextResponse.json(courseTopics)
   } catch (error) {
     console.error('Error fetching topics:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -31,64 +115,24 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    // Get the auth token from cookies
-    const token = request.cookies.get('auth-token')?.value
-    
-    if (!token) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      )
-    }
-
-    // Verify the token and get user info
-    const decoded = verifyToken(token)
-    if (!decoded) {
-      return NextResponse.json(
-        { error: 'Invalid token' },
-        { status: 401 }
-      )
-    }
-
     const courseId = params.id
     const body = await request.json()
 
-    // Verify the course belongs to the instructor
-    const course = await prisma.course.findUnique({
-      where: { id: courseId },
-      select: { instructorId: true }
-    })
-
-    if (!course) {
-      return NextResponse.json({ error: 'Course not found' }, { status: 404 })
-    }
-
-    if (course.instructorId !== decoded.userId && decoded.role !== 'ADMIN' && decoded.role !== 'SUPER_ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
-    }
-
     // Get the next order number
-    const lastTopic = await prisma.topic.findFirst({
-      where: { courseId },
-      orderBy: { order: 'desc' },
-      select: { order: true }
-    })
-
+    const courseTopics = mockTopics.filter(topic => topic.courseId === courseId)
+    const lastTopic = courseTopics[courseTopics.length - 1]
     const newOrder = (lastTopic?.order || 0) + 1
 
-    const newTopic = await prisma.topic.create({
-      data: {
-        title: body.title,
-        description: body.description,
-        order: newOrder,
-        courseId
-      },
-      include: {
-        lessons: {
-          orderBy: { order: 'asc' }
-        }
-      }
-    })
+    const newTopic = {
+      id: Date.now().toString(), // Simple ID generation
+      title: body.title,
+      description: body.description,
+      order: newOrder,
+      courseId,
+      lessons: []
+    }
+
+    mockTopics.push(newTopic)
 
     return NextResponse.json(newTopic, { status: 201 })
   } catch (error) {
@@ -102,25 +146,6 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    // Get the auth token from cookies
-    const token = request.cookies.get('auth-token')?.value
-    
-    if (!token) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      )
-    }
-
-    // Verify the token and get user info
-    const decoded = verifyToken(token)
-    if (!decoded) {
-      return NextResponse.json(
-        { error: 'Invalid token' },
-        { status: 401 }
-      )
-    }
-
     const courseId = params.id
     const topicId = request.nextUrl.searchParams.get('topicId')
     const body = await request.json()
@@ -129,38 +154,19 @@ export async function PUT(
       return NextResponse.json({ error: 'Topic ID required' }, { status: 400 })
     }
 
-    // Verify the topic belongs to a course owned by the instructor
-    const topic = await prisma.topic.findUnique({
-      where: { id: topicId },
-      include: {
-        course: {
-          select: { instructorId: true }
-        }
-      }
-    })
-
-    if (!topic) {
+    // Find and update the topic
+    const topicIndex = mockTopics.findIndex(topic => topic.id === topicId && topic.courseId === courseId)
+    if (topicIndex === -1) {
       return NextResponse.json({ error: 'Topic not found' }, { status: 404 })
     }
 
-    if (topic.course.instructorId !== decoded.userId && decoded.role !== 'ADMIN' && decoded.role !== 'SUPER_ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+    mockTopics[topicIndex] = {
+      ...mockTopics[topicIndex],
+      title: body.title,
+      description: body.description
     }
 
-    const updatedTopic = await prisma.topic.update({
-      where: { id: topicId },
-      data: {
-        title: body.title,
-        description: body.description
-      },
-      include: {
-        lessons: {
-          orderBy: { order: 'asc' }
-        }
-      }
-    })
-
-    return NextResponse.json(updatedTopic)
+    return NextResponse.json(mockTopics[topicIndex])
   } catch (error) {
     console.error('Error updating topic:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -172,25 +178,6 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    // Get the auth token from cookies
-    const token = request.cookies.get('auth-token')?.value
-    
-    if (!token) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      )
-    }
-
-    // Verify the token and get user info
-    const decoded = verifyToken(token)
-    if (!decoded) {
-      return NextResponse.json(
-        { error: 'Invalid token' },
-        { status: 401 }
-      )
-    }
-
     const courseId = params.id
     const topicId = request.nextUrl.searchParams.get('topicId')
 
@@ -198,28 +185,13 @@ export async function DELETE(
       return NextResponse.json({ error: 'Topic ID required' }, { status: 400 })
     }
 
-    // Verify the topic belongs to a course owned by the instructor
-    const topic = await prisma.topic.findUnique({
-      where: { id: topicId },
-      include: {
-        course: {
-          select: { instructorId: true }
-        }
-      }
-    })
-
-    if (!topic) {
+    // Find and remove the topic
+    const topicIndex = mockTopics.findIndex(topic => topic.id === topicId && topic.courseId === courseId)
+    if (topicIndex === -1) {
       return NextResponse.json({ error: 'Topic not found' }, { status: 404 })
     }
 
-    if (topic.course.instructorId !== decoded.userId && decoded.role !== 'ADMIN' && decoded.role !== 'SUPER_ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
-    }
-
-    // Delete the topic (lessons will be deleted automatically due to cascade)
-    await prisma.topic.delete({
-      where: { id: topicId }
-    })
+    mockTopics = mockTopics.filter(topic => topic.id !== topicId)
 
     return NextResponse.json({ message: 'Topic deleted successfully' })
   } catch (error) {

@@ -2,29 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { 
-  Users, 
-  BookOpen, 
-  CreditCard, 
-  BarChart3, 
-  Settings, 
-  TrendingUp,
-  Eye,
-  Edit,
-  Trash2,
-  Plus,
-  DollarSign,
-  Calendar,
-  Star,
-  MessageSquare,
-  FileText,
-  Shield,
-  Globe,
-  Palette,
-  Bell,
-  Search,
-  Filter,
-  LayoutDashboard, Users2, Book, UserCheck, Briefcase, Image, Bot, Rss, Ticket, Video
+import {
+  Users, BookOpen, DollarSign, TrendingUp, BarChart3, Settings,
+  Search, Filter, LayoutDashboard, Users2, Book, UserCheck, Briefcase, 
+  Image, Bot, Rss, Ticket, Home, ShoppingCart, Shield, FileText,
+  Plus, Star, Eye, Edit, Trash2, Calendar, MessageSquare, Globe, Palette, Bell
 } from 'lucide-react'
 
 interface DashboardStats {
@@ -60,17 +42,15 @@ interface RecentUser {
 }
 
 const sidebarMenu = [
-  { label: 'Dashboard', icon: LayoutDashboard, href: '/admin' },
-  { label: 'Enrollments', icon: Users2, href: '/admin/enrollments' },
-  { label: 'Courses', icon: Book, href: '/admin/courses' },
-  { label: 'Coupons', icon: Ticket, href: '/admin/coupons' },
-  { label: 'Manage Students', icon: UserCheck, href: '/admin/students' },
-  { label: 'Quiz & Assignment', icon: FileText, href: '/admin/quizzes' },
-  { label: 'Manage Instructors', icon: Briefcase, href: '/admin/instructors' },
+  { label: 'Dashboard', icon: Home, href: '/admin' },
+  { label: 'Users', icon: Users, href: '/admin/users' },
+  { label: 'Courses', icon: BookOpen, href: '/admin/courses' },
+  { label: 'Orders', icon: ShoppingCart, href: '/admin/orders' },
+  { label: 'Analytics', icon: BarChart3, href: '/admin/analytics' },
+  { label: 'Settings', icon: Settings, href: '/admin/settings' },
   { label: 'Manage Organization', icon: Users, href: '/admin/organizations' },
   { label: 'Staff', icon: Users, href: '/admin/staff' },
   { label: 'Media Library', icon: Image, href: '/admin/media' },
-  { label: 'Vimeo Videos', icon: Video, href: '/admin/vimeo' },
   { label: 'AI Assistant', icon: Bot, href: '/admin/ai' },
   { label: 'Blog', icon: Rss, href: '/admin/blog' },
 ]
@@ -279,14 +259,6 @@ export default function AdminDashboard() {
       color: 'bg-pink-600',
       description: 'Manage media files and assets',
       stats: '156 files'
-    },
-    {
-      title: 'Vimeo Videos',
-      icon: Video,
-      href: '/admin/vimeo',
-      color: 'bg-teal-600',
-      description: 'Manage external Vimeo videos',
-      stats: '24 videos'
     },
     {
       title: 'AI Assistant',

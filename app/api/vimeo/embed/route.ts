@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { vimeoAPI } from '@/lib/vimeo'
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,16 +12,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid JSON in request body' }, { status: 400 })
     }
     
-    const { videoUrl } = body
+    const { videoUrl, domain, protected: isProtected = true } = body
     
     if (!videoUrl) {
       return NextResponse.json({ error: 'Video URL is required' }, { status: 400 })
     }
 
-    // Extract video ID from various Vimeo URL formats
-    const videoId = videoUrl.match(/vimeo\.com\/(\d+)/)?.[1] || 
-                   videoUrl.match(/vimeo\.com\/video\/(\d+)/)?.[1] ||
-                   videoUrl.match(/player\.vimeo\.com\/video\/(\d+)/)?.[1]
+    // Use the improved Vimeo API to extract video ID
+    const videoId = vimeoAPI.extractVideoId(videoUrl)
 
     if (!videoId) {
       return NextResponse.json({ error: 'Invalid Vimeo URL format' }, { status: 400 })
@@ -36,22 +35,30 @@ export async function POST(request: NextRequest) {
     console.log('VIMEO_ACCESS_TOKEN value:', process.env.VIMEO_ACCESS_TOKEN ? `${process.env.VIMEO_ACCESS_TOKEN.substring(0, 10)}...` : 'NOT SET')
     console.log('Using token:', vimeoToken ? `${vimeoToken.substring(0, 10)}...` : 'NOT SET')
     console.log('Video ID:', videoId)
-    console.log('Video URL received:', videoUrl)
+    console.log('Original Video URL:', videoUrl)
+    console.log('Normalized URL:', vimeoAPI.normalizeVimeoUrl(videoUrl))
+    console.log('Protected Mode:', isProtected)
+    console.log('Domain Restriction:', domain)
     console.log('========================')
 
     if (!vimeoToken) {
-      console.warn('VIMEO_ACCESS_TOKEN not configured, using basic embed')
+      console.warn('VIMEO_ACCESS_TOKEN not configured, using protected embed')
       
-      // Extract hash from original URL if available
-      const hashMatch = videoUrl.match(/\/b([a-f0-9]+)/)
-      const hashParam = hashMatch ? `&h=${hashMatch[1]}` : ''
+      // Use protected embed URL generation for course content
+      const embedUrl = vimeoAPI.getEmbedUrl(videoId, {
+        autoplay: false,
+        muted: false,
+        controls: true,
+        responsive: true,
+        protected: isProtected,
+        domain: domain
+      })
       
-      // Fallback to basic embed URL
-      const embedUrl = `https://player.vimeo.com/video/${videoId}?h=auto&autoplay=0&title=0&byline=0&portrait=0&dnt=1&transparent=0${hashParam}`
       return NextResponse.json({ 
         embedUrl,
         videoId,
-        message: 'Using basic embed (Vimeo token not configured)'
+        protected: isProtected,
+        message: 'Using protected embed (Vimeo token not configured)'
       })
     }
 
@@ -66,12 +73,21 @@ export async function POST(request: NextRequest) {
 
       if (!vimeoResponse.ok) {
         console.warn(`Vimeo API error: ${vimeoResponse.status}`)
-        // Fallback to basic embed URL
-        const embedUrl = `https://player.vimeo.com/video/${videoId}?h=auto&autoplay=0&title=0&byline=0&portrait=0&dnt=1&transparent=0`
+        // Fallback to protected embed URL
+        const embedUrl = vimeoAPI.getEmbedUrl(videoId, {
+          autoplay: false,
+          muted: false,
+          controls: true,
+          responsive: true,
+          protected: isProtected,
+          domain: domain
+        })
+        
         return NextResponse.json({ 
           embedUrl,
           videoId,
-          message: 'Using basic embed (Vimeo API error)'
+          protected: isProtected,
+          message: 'Using protected embed (Vimeo API error)'
         })
       }
 
@@ -83,63 +99,57 @@ export async function POST(request: NextRequest) {
       
       console.log(`Video privacy: ${privacy}, embed privacy: ${embedPrivacy}`)
 
-      // Build embed URL with appropriate parameters
-      let embedUrl = `https://player.vimeo.com/video/${videoId}`
-      
-      // Add parameters for better compatibility
-      const params = new URLSearchParams({
-        h: 'auto',
-        autoplay: '0',
-        title: '0',
-        byline: '0',
-        portrait: '0',
-        dnt: '1',
-        transparent: '0'
+      // Use protected embed URL generation with privacy considerations
+      let embedUrl = vimeoAPI.getEmbedUrl(videoId, {
+        autoplay: false,
+        muted: false,
+        controls: true,
+        responsive: true,
+        protected: isProtected,
+        domain: domain
       })
 
       // For unlisted videos, we need to add the hash parameter
-      if (privacy === 'unlisted' || privacy === 'nobody') {
-        // Extract hash from original URL if available
-        const hashMatch = videoUrl.match(/\/b([a-f0-9]+)/)
+      if (privacy === 'unlisted' && videoData.link) {
+        const hashMatch = videoData.link.match(/\/b([a-f0-9]+)/)
         if (hashMatch) {
-          params.set('h', `b${hashMatch[1]}`)
+          embedUrl += `&h=${hashMatch[1]}`
         }
       }
-
-      // Add domain restriction if video is domain-restricted
-      if (embedPrivacy === 'whitelist') {
-        params.append('domain', 'localhost')
-        params.append('domain', 'yourdomain.com') // Add your actual domain
-      }
-
-      embedUrl += `?${params.toString()}`
-
-      console.log('Final embed URL:', embedUrl)
 
       return NextResponse.json({
         embedUrl,
         videoId,
-        videoTitle: videoData.name,
+        title: videoData.name,
         duration: videoData.duration,
         privacy,
-        embedPrivacy,
-        thumbnail: videoData.pictures?.base_link,
-        message: 'Video details fetched successfully'
+        protected: isProtected,
+        message: 'Protected video embed URL generated successfully'
       })
 
     } catch (apiError) {
-      console.error('Vimeo API error:', apiError)
-      // Fallback to basic embed URL
-      const embedUrl = `https://player.vimeo.com/video/${videoId}?h=auto&autoplay=0&title=0&byline=0&portrait=0&dnt=1&transparent=0`
+      console.error('Error fetching from Vimeo API:', apiError)
+      
+      // Fallback to protected embed URL
+      const embedUrl = vimeoAPI.getEmbedUrl(videoId, {
+        autoplay: false,
+        muted: false,
+        controls: true,
+        responsive: true,
+        protected: isProtected,
+        domain: domain
+      })
+      
       return NextResponse.json({ 
         embedUrl,
         videoId,
-        message: 'Using basic embed (API error)'
+        protected: isProtected,
+        message: 'Using protected embed (API error)'
       })
     }
 
   } catch (error) {
-    console.error('Vimeo embed error:', error)
-    return NextResponse.json({ error: 'Failed to process video URL' }, { status: 500 })
+    console.error('Error processing Vimeo embed request:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 } 

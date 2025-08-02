@@ -1,7 +1,4 @@
 {
-  "/not-found": "app/not-found.js",
-  "/courses/[id]/page": "app/courses/[id]/page.js",
-  "/api/courses/[id]/route": "app/api/courses/[id]/route.js",
-  "/api/courses/[id]/lessons/route": "app/api/courses/[id]/lessons/route.js",
-  "/api/vimeo/embed/route": "app/api/vimeo/embed/route.js"
+  "/api/courses/route": "app/api/courses/route.js",
+  "/not-found": "app/not-found.js"
 }

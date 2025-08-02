@@ -77,11 +77,16 @@ export function getUserRole(): string | null {
     const match = document.cookie.match(/auth-token=([^;]+)/)
     if (match) {
       const token = match[1]
+      console.log('Found auth token, decoding...')
       const decoded = jwtDecode(token) as { role?: string }
+      console.log('Decoded token:', decoded)
+      console.log('User role:', decoded.role)
       return decoded.role || null
+    } else {
+      console.log('No auth token found in cookies')
     }
   } catch (e) {
-    // ignore
+    console.error('Error decoding JWT token:', e)
   }
   return null
 }

@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { Menu, X, BookOpen, Users, Star, Home } from 'lucide-react'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { isLoggedIn, getDashboardUrl, handleLogout } from '@/lib/auth'
+import { isLoggedIn, getDashboardUrl, handleLogout, getUserRole } from '@/lib/auth'
 
 const navigation = [
   { name: 'Home', href: '/', icon: Home },
@@ -18,14 +18,20 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [loggedIn, setLoggedIn] = useState<boolean | undefined>(undefined)
   const [clientPath, setClientPath] = useState<string | undefined>(undefined)
-  const [dashboardUrl, setDashboardUrl] = useState<string>('/dashboard')
   const pathname = usePathname()
 
   useEffect(() => {
     setLoggedIn(isLoggedIn())
     setClientPath(window.location.pathname)
-    setDashboardUrl(getDashboardUrl())
   }, [pathname]);
+
+  // Calculate dashboard URL dynamically
+  const dashboardUrl = getDashboardUrl()
+  
+  // Debug logging
+  console.log('Header - loggedIn:', loggedIn)
+  console.log('Header - dashboardUrl:', dashboardUrl)
+  console.log('Header - user role:', getUserRole())
 
   if (loggedIn === undefined || clientPath === undefined) {
     return null // Wait for client check
@@ -110,7 +116,7 @@ export default function Header() {
                   href={dashboardUrl}
                   className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 >
-                  Go to Dashboard
+                  Go to Dashboard ({getUserRole() || 'Unknown'})
                 </Link>
                 <button
                   onClick={handleLogout}
@@ -171,7 +177,7 @@ export default function Header() {
                       className="bg-primary-600 hover:bg-primary-700 text-white block w-full text-left px-3 py-2 rounded-lg text-base font-medium"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      Go to Dashboard
+                      Go to Dashboard ({getUserRole() || 'Unknown'})
                     </Link>
                     <button
                       onClick={handleLogout}

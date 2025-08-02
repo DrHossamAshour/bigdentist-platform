@@ -129,7 +129,7 @@ export default function Header() {
                   href={dashboardUrl}
                   className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 >
-                  Go to Dashboard ({userRole || 'Unknown'})
+                  {userRole ? `Dashboard (${userRole})` : 'Dashboard'}
                 </Link>
                 <button
                   onClick={handleLogout}
@@ -207,7 +207,7 @@ export default function Header() {
                       className="bg-primary-600 hover:bg-primary-700 text-white block w-full text-left px-3 py-2 rounded-lg text-base font-medium"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      Go to Dashboard ({userRole || 'Unknown'})
+                      {userRole ? `Dashboard (${userRole})` : 'Dashboard'}
                     </Link>
                     <button
                       onClick={handleLogout}

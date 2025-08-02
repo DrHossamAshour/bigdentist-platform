@@ -317,7 +317,7 @@ export default function Hero() {
 
   const getCardStyle = (index: number) => {
     const position = index - currentIndex
-    const baseStyle = `flex-shrink-0 px-3 transition-all duration-700 ease-out`
+    const baseStyle = `flex-shrink-0 transition-all duration-700 ease-out`
     
     if (position < 0 || position >= cardsToShow) {
       return `${baseStyle} opacity-0 scale-75 pointer-events-none`
@@ -386,7 +386,7 @@ export default function Hero() {
             </p>
           </div>
 
-          {/* Course Carousel - Responsive */}
+          {/* Course Carousel - Modern Card Swipe */}
           <div className="relative max-w-7xl mx-auto">
             {/* Navigation Arrows - Always visible when there are multiple slides */}
             {courses.length > cardsToShow && (
@@ -432,7 +432,7 @@ export default function Hero() {
               </>
             )}
 
-            {/* Carousel Container with hover pause and drag/swipe */}
+            {/* Modern Card Swipe Container */}
             <div 
               className="relative overflow-hidden rounded-2xl cursor-grab active:cursor-grabbing"
               onMouseEnter={() => setIsAutoPlaying(false)}
@@ -454,7 +454,7 @@ export default function Hero() {
                 </div>
               )}
 
-              {/* Infinite swipe effect - duplicate cards for seamless loop */}
+              {/* Card Swipe Container */}
               <div 
                 className="flex transition-transform duration-700 ease-in-out"
                 style={{
@@ -465,14 +465,11 @@ export default function Hero() {
                 {/* Duplicate first cards at the end for infinite effect */}
                 {courses.slice(-cardsToShow).map((course, index) => (
                   <div key={`end-${course.id}`} className={getCardStyle(index - cardsToShow)}>
-                    <div className="relative group cursor-pointer">
-                      {/* Main Card Container */}
-                      <div className="bg-gradient-to-br from-white/10 via-white/20 to-white/5 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-white/20 h-full transition-all duration-500 hover:shadow-3xl hover:border-white/40 hover:scale-105">
-                        {/* Animated Background */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-primary-500/20 via-secondary-500/20 to-primary-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                        
-                        {/* Course Image */}
-                        <div className="h-56 bg-gradient-to-br from-gray-900 to-gray-800 relative overflow-hidden">
+                    <div className="relative group cursor-pointer mx-2">
+                      {/* Modern Card Container */}
+                      <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 h-full transition-all duration-500 hover:shadow-2xl hover:scale-105 hover:-translate-y-2 transform">
+                        {/* Card Image */}
+                        <div className="h-48 bg-gradient-to-br from-gray-900 to-gray-800 relative overflow-hidden">
                           <img
                             src={course.image || course.thumbnail || 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=250&fit=crop'}
                             alt={course.title}
@@ -482,7 +479,7 @@ export default function Hero() {
                             }}
                           />
                           
-                          {/* Animated Overlay */}
+                          {/* Gradient Overlay */}
                           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500">
                             <div className="absolute bottom-4 right-4">
                               <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 animate-pulse">
@@ -493,60 +490,147 @@ export default function Hero() {
 
                           {/* Floating Badge */}
                           <div className="absolute top-4 left-4">
-                            <span className="bg-gradient-to-r from-secondary-400 to-secondary-600 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg animate-bounce">
+                            <span className="bg-gradient-to-r from-primary-400 to-secondary-400 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-bounce">
                               Special Offer
                             </span>
                           </div>
 
                           {/* Duration Badge */}
-                          <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-sm text-white px-3 py-1 rounded-lg flex items-center gap-2">
-                            <Clock className="w-4 h-4" />
-                            <span className="text-sm font-medium">{course.countdown || '25:00'} Hours</span>
+                          <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-sm text-white px-2 py-1 rounded-lg flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            <span className="text-xs font-medium">{course.countdown || '25:00'}h</span>
                           </div>
 
                           {/* Hover Action Button */}
                           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500">
-                            <button className="bg-white/20 backdrop-blur-sm text-white px-6 py-3 rounded-full font-semibold hover:bg-white/30 transition-all duration-300 transform hover:scale-110">
+                            <button className="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full font-semibold hover:bg-white/30 transition-all duration-300 transform hover:scale-110">
                               View Course
                             </button>
                           </div>
                         </div>
 
-                        {/* Course Content */}
-                        <div className="p-6 relative z-10">
+                        {/* Card Content */}
+                        <div className="p-4">
                           {/* Course Title */}
-                          <h3 className="text-xl font-bold text-gray-900 mb-3 leading-tight group-hover:text-primary-600 transition-colors duration-300">
+                          <h3 className="text-lg font-bold text-gray-900 mb-2 leading-tight group-hover:text-primary-600 transition-colors duration-300 line-clamp-2">
                             {course.title}
                           </h3>
                           
                           {/* Arabic Subtitle */}
                           {course.subtitle && (
-                            <p className="text-sm text-gray-600 mb-4 font-medium">
+                            <p className="text-sm text-gray-600 mb-3 font-medium line-clamp-1">
                               {course.subtitle}
                             </p>
                           )}
 
                           {/* Course Topics */}
                           {course.topics && course.topics.length > 0 && (
-                            <ul className="mb-6 space-y-2">
-                              {course.topics.slice(0, 3).map((topic, index) => (
-                                <li key={index} className="flex items-center text-sm text-gray-700">
-                                  <span className="w-2 h-2 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full mr-3 animate-pulse"></span>
-                                  {topic}
+                            <ul className="mb-4 space-y-1">
+                              {course.topics.slice(0, 2).map((topic, index) => (
+                                <li key={index} className="flex items-center text-xs text-gray-700">
+                                  <span className="w-1.5 h-1.5 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full mr-2 animate-pulse"></span>
+                                  <span className="line-clamp-1">{topic}</span>
                                 </li>
                               ))}
                             </ul>
                           )}
 
                           {/* Enroll Button */}
-                          <button className="w-full bg-gradient-to-r from-primary-600 to-secondary-600 hover:from-primary-700 hover:to-secondary-700 text-white py-3 px-4 rounded-xl transition-all duration-300 text-sm font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 group-hover:shadow-2xl">
+                          <button className="w-full bg-gradient-to-r from-primary-600 to-secondary-600 hover:from-primary-700 hover:to-secondary-700 text-white py-2 px-3 rounded-xl transition-all duration-300 text-sm font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 group-hover:shadow-2xl">
                             Enroll Now
                           </button>
                         </div>
 
                         {/* Floating Elements */}
-                        <div className="absolute -top-2 -right-2 w-4 h-4 bg-gradient-to-r from-primary-400 to-secondary-400 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-500 animate-ping"></div>
-                        <div className="absolute -bottom-2 -left-2 w-3 h-3 bg-gradient-to-r from-secondary-400 to-primary-400 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-700 animate-pulse"></div>
+                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-primary-400 to-secondary-400 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-500 animate-ping"></div>
+                        <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-gradient-to-r from-secondary-400 to-primary-400 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-700 animate-pulse"></div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Main course cards */}
+                {courses.map((course, index) => (
+                  <div key={course.id} className={getCardStyle(index)}>
+                    <div className="relative group cursor-pointer mx-2">
+                      {/* Modern Card Container */}
+                      <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 h-full transition-all duration-500 hover:shadow-2xl hover:scale-105 hover:-translate-y-2 transform">
+                        {/* Card Image */}
+                        <div className="h-48 bg-gradient-to-br from-gray-900 to-gray-800 relative overflow-hidden">
+                          <img
+                            src={course.image || course.thumbnail || 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=250&fit=crop'}
+                            alt={course.title}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                            onError={(e) => {
+                              e.currentTarget.src = 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=250&fit=crop'
+                            }}
+                          />
+                          
+                          {/* Gradient Overlay */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500">
+                            <div className="absolute bottom-4 right-4">
+                              <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 animate-pulse">
+                                <ArrowRight className="w-6 h-6 text-white" />
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Floating Badge */}
+                          <div className="absolute top-4 left-4">
+                            <span className="bg-gradient-to-r from-primary-400 to-secondary-400 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-bounce">
+                              Special Offer
+                            </span>
+                          </div>
+
+                          {/* Duration Badge */}
+                          <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-sm text-white px-2 py-1 rounded-lg flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            <span className="text-xs font-medium">{course.countdown || '25:00'}h</span>
+                          </div>
+
+                          {/* Hover Action Button */}
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500">
+                            <button className="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full font-semibold hover:bg-white/30 transition-all duration-300 transform hover:scale-110">
+                              View Course
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Card Content */}
+                        <div className="p-4">
+                          {/* Course Title */}
+                          <h3 className="text-lg font-bold text-gray-900 mb-2 leading-tight group-hover:text-primary-600 transition-colors duration-300 line-clamp-2">
+                            {course.title}
+                          </h3>
+                          
+                          {/* Arabic Subtitle */}
+                          {course.subtitle && (
+                            <p className="text-sm text-gray-600 mb-3 font-medium line-clamp-1">
+                              {course.subtitle}
+                            </p>
+                          )}
+
+                          {/* Course Topics */}
+                          {course.topics && course.topics.length > 0 && (
+                            <ul className="mb-4 space-y-1">
+                              {course.topics.slice(0, 2).map((topic, index) => (
+                                <li key={index} className="flex items-center text-xs text-gray-700">
+                                  <span className="w-1.5 h-1.5 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full mr-2 animate-pulse"></span>
+                                  <span className="line-clamp-1">{topic}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+
+                          {/* Enroll Button */}
+                          <button className="w-full bg-gradient-to-r from-primary-600 to-secondary-600 hover:from-primary-700 hover:to-secondary-700 text-white py-2 px-3 rounded-xl transition-all duration-300 text-sm font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 group-hover:shadow-2xl">
+                            Enroll Now
+                          </button>
+                        </div>
+
+                        {/* Floating Elements */}
+                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-primary-400 to-secondary-400 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-500 animate-ping"></div>
+                        <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-gradient-to-r from-secondary-400 to-primary-400 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-700 animate-pulse"></div>
                       </div>
                     </div>
                   </div>
@@ -555,14 +639,11 @@ export default function Hero() {
                 {/* Duplicate last cards at the beginning for infinite effect */}
                 {courses.slice(0, cardsToShow).map((course, index) => (
                   <div key={`start-${course.id}`} className={getCardStyle(index + courses.length)}>
-                    <div className="relative group cursor-pointer">
-                      {/* Main Card Container */}
-                      <div className="bg-gradient-to-br from-white/10 via-white/20 to-white/5 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-white/20 h-full transition-all duration-500 hover:shadow-3xl hover:border-white/40 hover:scale-105">
-                        {/* Animated Background */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-primary-500/20 via-secondary-500/20 to-primary-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                        
-                        {/* Course Image */}
-                        <div className="h-56 bg-gradient-to-br from-gray-900 to-gray-800 relative overflow-hidden">
+                    <div className="relative group cursor-pointer mx-2">
+                      {/* Modern Card Container */}
+                      <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 h-full transition-all duration-500 hover:shadow-2xl hover:scale-105 hover:-translate-y-2 transform">
+                        {/* Card Image */}
+                        <div className="h-48 bg-gradient-to-br from-gray-900 to-gray-800 relative overflow-hidden">
                           <img
                             src={course.image || course.thumbnail || 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=250&fit=crop'}
                             alt={course.title}
@@ -572,7 +653,7 @@ export default function Hero() {
                             }}
                           />
                           
-                          {/* Animated Overlay */}
+                          {/* Gradient Overlay */}
                           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500">
                             <div className="absolute bottom-4 right-4">
                               <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 animate-pulse">
@@ -583,60 +664,60 @@ export default function Hero() {
 
                           {/* Floating Badge */}
                           <div className="absolute top-4 left-4">
-                            <span className="bg-gradient-to-r from-secondary-400 to-secondary-600 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg animate-bounce">
+                            <span className="bg-gradient-to-r from-primary-400 to-secondary-400 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-bounce">
                               Special Offer
                             </span>
                           </div>
 
                           {/* Duration Badge */}
-                          <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-sm text-white px-3 py-1 rounded-lg flex items-center gap-2">
-                            <Clock className="w-4 h-4" />
-                            <span className="text-sm font-medium">{course.countdown || '25:00'} Hours</span>
+                          <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-sm text-white px-2 py-1 rounded-lg flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            <span className="text-xs font-medium">{course.countdown || '25:00'}h</span>
                           </div>
 
                           {/* Hover Action Button */}
                           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500">
-                            <button className="bg-white/20 backdrop-blur-sm text-white px-6 py-3 rounded-full font-semibold hover:bg-white/30 transition-all duration-300 transform hover:scale-110">
+                            <button className="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full font-semibold hover:bg-white/30 transition-all duration-300 transform hover:scale-110">
                               View Course
                             </button>
                           </div>
                         </div>
 
-                        {/* Course Content */}
-                        <div className="p-6 relative z-10">
+                        {/* Card Content */}
+                        <div className="p-4">
                           {/* Course Title */}
-                          <h3 className="text-xl font-bold text-gray-900 mb-3 leading-tight group-hover:text-primary-600 transition-colors duration-300">
+                          <h3 className="text-lg font-bold text-gray-900 mb-2 leading-tight group-hover:text-primary-600 transition-colors duration-300 line-clamp-2">
                             {course.title}
                           </h3>
                           
                           {/* Arabic Subtitle */}
                           {course.subtitle && (
-                            <p className="text-sm text-gray-600 mb-4 font-medium">
+                            <p className="text-sm text-gray-600 mb-3 font-medium line-clamp-1">
                               {course.subtitle}
                             </p>
                           )}
 
                           {/* Course Topics */}
                           {course.topics && course.topics.length > 0 && (
-                            <ul className="mb-6 space-y-2">
-                              {course.topics.slice(0, 3).map((topic, index) => (
-                                <li key={index} className="flex items-center text-sm text-gray-700">
-                                  <span className="w-2 h-2 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full mr-3 animate-pulse"></span>
-                                  {topic}
+                            <ul className="mb-4 space-y-1">
+                              {course.topics.slice(0, 2).map((topic, index) => (
+                                <li key={index} className="flex items-center text-xs text-gray-700">
+                                  <span className="w-1.5 h-1.5 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full mr-2 animate-pulse"></span>
+                                  <span className="line-clamp-1">{topic}</span>
                                 </li>
                               ))}
                             </ul>
                           )}
 
                           {/* Enroll Button */}
-                          <button className="w-full bg-gradient-to-r from-primary-600 to-secondary-600 hover:from-primary-700 hover:to-secondary-700 text-white py-3 px-4 rounded-xl transition-all duration-300 text-sm font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 group-hover:shadow-2xl">
+                          <button className="w-full bg-gradient-to-r from-primary-600 to-secondary-600 hover:from-primary-700 hover:to-secondary-700 text-white py-2 px-3 rounded-xl transition-all duration-300 text-sm font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 group-hover:shadow-2xl">
                             Enroll Now
                           </button>
                         </div>
 
                         {/* Floating Elements */}
-                        <div className="absolute -top-2 -right-2 w-4 h-4 bg-gradient-to-r from-primary-400 to-secondary-400 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-500 animate-ping"></div>
-                        <div className="absolute -bottom-2 -left-2 w-3 h-3 bg-gradient-to-r from-secondary-400 to-primary-400 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-700 animate-pulse"></div>
+                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-primary-400 to-secondary-400 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-500 animate-ping"></div>
+                        <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-gradient-to-r from-secondary-400 to-primary-400 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-700 animate-pulse"></div>
                       </div>
                     </div>
                   </div>

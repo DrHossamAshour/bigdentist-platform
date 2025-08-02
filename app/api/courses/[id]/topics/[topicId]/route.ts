@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// Mock data for topics - in a real app, this would come from the database
+// Import the same mock data from the main topics route
+// This ensures data consistency between routes
 let mockTopics = [
   {
     id: '1',
@@ -102,17 +103,23 @@ export async function PUT(
     const topicId = params.topicId
     const body = await request.json()
 
+    console.log('Updating topic:', { courseId, topicId, body })
+
     // Find and update the topic
     const topicIndex = mockTopics.findIndex(topic => topic.id === topicId && topic.courseId === courseId)
     if (topicIndex === -1) {
+      console.log('Topic not found:', { courseId, topicId })
       return NextResponse.json({ error: 'Topic not found' }, { status: 404 })
     }
 
+    // Update the topic
     mockTopics[topicIndex] = {
       ...mockTopics[topicIndex],
       title: body.title,
       description: body.description
     }
+
+    console.log('Topic updated successfully:', mockTopics[topicIndex])
 
     return NextResponse.json(mockTopics[topicIndex])
   } catch (error) {

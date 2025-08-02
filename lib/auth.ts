@@ -79,7 +79,7 @@ export function getUserRole(): string | null {
     if (userData) {
       const parsed = JSON.parse(userData)
       console.log('User data from localStorage:', parsed)
-      if (parsed.role) {
+      if (parsed && parsed.role) {
         console.log('User role from localStorage:', parsed.role)
         return parsed.role
       }
@@ -92,14 +92,18 @@ export function getUserRole(): string | null {
       console.log('Found auth token, decoding...')
       const decoded = jwtDecode(token) as { role?: string }
       console.log('Decoded token:', decoded)
-      console.log('User role from JWT:', decoded.role)
-      return decoded.role || null
+      if (decoded && decoded.role) {
+        console.log('User role from JWT:', decoded.role)
+        return decoded.role
+      }
     } else {
       console.log('No auth token found in cookies')
     }
   } catch (e) {
     console.error('Error getting user role:', e)
   }
+  
+  console.log('No user role found, returning null')
   return null
 }
 

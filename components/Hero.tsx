@@ -120,29 +120,23 @@ interface Course {
 }
 
 export default function Hero() {
-  const [courses, setCourses] = useState<Course[]>([])
+  const [courses, setCourses] = useState<Course[]>(mockCourses)
   const [loading, setLoading] = useState(true)
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [cardsToShow, setCardsToShow] = useState(5)
+  const [cardsToShow, setCardsToShow] = useState(4)
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true)
 
-  // Fetch courses from API
-  useEffect(() => {
-    fetchCourses()
-  }, [])
-
-  // Set responsive cards count
+  // Responsive card count
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 640) {
-        setCardsToShow(1) // Mobile: 1 card
+        setCardsToShow(1)
       } else if (window.innerWidth < 768) {
-        setCardsToShow(2) // Small tablet: 2 cards
+        setCardsToShow(2)
       } else if (window.innerWidth < 1024) {
-        setCardsToShow(3) // Tablet: 3 cards
-      } else if (window.innerWidth < 1280) {
-        setCardsToShow(4) // Small desktop: 4 cards
+        setCardsToShow(3)
       } else {
-        setCardsToShow(5) // Desktop: 5 cards
+        setCardsToShow(4)
       }
     }
 
@@ -151,13 +145,17 @@ export default function Hero() {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
+  // Fetch courses from API
+  useEffect(() => {
+    fetchCourses()
+  }, [])
+
   const fetchCourses = async () => {
     try {
       const res = await fetch('/api/courses?published=true')
       if (res.ok) {
         const data = await res.json()
         if (data && data.length > 0) {
-          // Transform API data to match our format
           const transformedCourses = data.map((course: any) => ({
             id: course.id,
             title: course.title,
@@ -168,29 +166,75 @@ export default function Hero() {
           }))
           setCourses(transformedCourses)
         } else {
-          setCourses(mockCourses)
+          setCourses(mockCourses) // Fallback to mockCourses if API returns empty
         }
       } else {
-        setCourses(mockCourses)
+        setCourses(mockCourses) // Fallback to mockCourses if API response is not ok
       }
     } catch (error) {
       console.error('Error fetching courses:', error)
-      setCourses(mockCourses)
+      setCourses(mockCourses) // Fallback to mockCourses on fetch error
     } finally {
       setLoading(false)
     }
   }
 
-  // Auto-slide every 6 seconds
+  // Auto-slide functionality with pause on hover
   useEffect(() => {
-    if (courses.length === 0) return
-    
+    if (!isAutoPlaying || courses.length <= cardsToShow) return
+
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % Math.max(1, courses.length - cardsToShow + 1))
-    }, 6000)
+    }, 5000) // Changed from 6000 to 5000 for faster auto-sliding
 
     return () => clearInterval(interval)
-  }, [courses.length, cardsToShow])
+  }, [courses.length, cardsToShow, isAutoPlaying])
+
+  // Progress indicator for auto-sliding
+  const [progress, setProgress] = useState(0)
+  
+  useEffect(() => {
+    if (!isAutoPlaying || courses.length <= cardsToShow) {
+      setProgress(0)
+      return
+    }
+
+    const duration = 5000 // 5 seconds
+    const interval = 50 // Update every 50ms
+    const steps = duration / interval
+    let currentStep = 0
+
+    const progressInterval = setInterval(() => {
+      currentStep++
+      setProgress((currentStep / steps) * 100)
+      
+      if (currentStep >= steps) {
+        currentStep = 0
+        setProgress(0)
+      }
+    }, interval)
+
+    return () => clearInterval(progressInterval)
+  }, [isAutoPlaying, currentIndex, courses.length, cardsToShow])
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault()
+        prevSlide()
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault()
+        nextSlide()
+      } else if (e.key === ' ') {
+        e.preventDefault()
+        setIsAutoPlaying(!isAutoPlaying)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isAutoPlaying])
 
   const nextSlide = () => {
     setCurrentIndex((prev) => (prev + 1) % Math.max(1, courses.length - cardsToShow + 1))
@@ -198,6 +242,14 @@ export default function Hero() {
 
   const prevSlide = () => {
     setCurrentIndex((prev) => (prev - 1 + Math.max(1, courses.length - cardsToShow + 1)) % Math.max(1, courses.length - cardsToShow + 1))
+  }
+
+  const goToSlide = (index: number) => {
+    setCurrentIndex(index)
+  }
+
+  const toggleAutoPlay = () => {
+    setIsAutoPlaying(!isAutoPlaying)
   }
 
   const getCardStyle = (index: number) => {
@@ -274,27 +326,61 @@ export default function Hero() {
 
           {/* Course Carousel - Responsive */}
           <div className="relative max-w-7xl mx-auto">
-            {/* Navigation Arrows - Hidden on mobile */}
-            {cardsToShow < courses.length && (
+            {/* Navigation Arrows - Always visible when there are multiple slides */}
+            {courses.length > cardsToShow && (
               <>
                 <button
                   onClick={prevSlide}
-                  className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-6 z-20 bg-white hover:bg-gray-50 border border-gray-200 rounded-full p-4 shadow-lg transition-all duration-200 hover:shadow-xl hidden sm:block"
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 z-30 bg-white hover:bg-gray-50 border border-gray-200 rounded-full p-3 shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-110 group"
+                  aria-label="Previous slide"
                 >
-                  <ChevronLeft className="w-6 h-6 text-gray-600" />
+                  <ChevronLeft className="w-5 h-5 text-gray-600 group-hover:text-primary-600" />
                 </button>
 
                 <button
                   onClick={nextSlide}
-                  className="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-6 z-20 bg-white hover:bg-gray-50 border border-gray-200 rounded-full p-4 shadow-lg transition-all duration-200 hover:shadow-xl hidden sm:block"
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 z-30 bg-white hover:bg-gray-50 border border-gray-200 rounded-full p-3 shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-110 group"
+                  aria-label="Next slide"
                 >
-                  <ChevronRight className="w-6 h-6 text-gray-600" />
+                  <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-primary-600" />
+                </button>
+
+                {/* Auto-play toggle button */}
+                <button
+                  onClick={toggleAutoPlay}
+                  className="absolute top-4 right-4 z-30 bg-white hover:bg-gray-50 border border-gray-200 rounded-full p-2 shadow-lg transition-all duration-200 hover:shadow-xl group"
+                  aria-label={isAutoPlaying ? 'Pause auto-slide' : 'Resume auto-slide'}
+                >
+                  {isAutoPlaying ? (
+                    <div className="w-4 h-4 text-gray-600 group-hover:text-primary-600">
+                      <div className="w-1 h-4 bg-current rounded-sm mx-0.5 inline-block"></div>
+                      <div className="w-1 h-4 bg-current rounded-sm mx-0.5 inline-block"></div>
+                    </div>
+                  ) : (
+                    <div className="w-4 h-4 text-gray-600 group-hover:text-primary-600">
+                      <div className="w-0 h-0 border-l-4 border-l-current border-t-2 border-t-transparent border-b-2 border-b-transparent ml-1"></div>
+                    </div>
+                  )}
                 </button>
               </>
             )}
 
-            {/* Carousel Container */}
-            <div className="relative overflow-hidden">
+            {/* Carousel Container with hover pause */}
+            <div 
+              className="relative overflow-hidden rounded-2xl"
+              onMouseEnter={() => setIsAutoPlaying(false)}
+              onMouseLeave={() => setIsAutoPlaying(true)}
+            >
+              {/* Progress indicator */}
+              {isAutoPlaying && courses.length > cardsToShow && (
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gray-200 z-20">
+                  <div 
+                    className="h-full bg-primary-600 transition-all duration-50 ease-linear"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+              )}
+
               <div 
                 className="flex transition-transform duration-700 ease-in-out"
                 style={{
@@ -311,6 +397,9 @@ export default function Hero() {
                           src={course.image || course.thumbnail || 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=250&fit=crop'}
                           alt={course.title}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                          onError={(e) => {
+                            e.currentTarget.src = 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=250&fit=crop'
+                          }}
                         />
                         {/* Special Offer Badge */}
                         <div className="absolute top-4 left-4">
@@ -362,20 +451,42 @@ export default function Hero() {
               </div>
             </div>
 
-            {/* Mobile Navigation Dots */}
-            {cardsToShow < courses.length && (
-              <div className="flex justify-center mt-6 sm:hidden">
+            {/* Desktop Navigation Dots */}
+            {courses.length > cardsToShow && (
+              <div className="flex justify-center mt-6 hidden sm:flex">
                 {Array.from({ length: Math.ceil(courses.length / cardsToShow) }).map((_, index) => (
                   <button
                     key={index}
-                    onClick={() => setCurrentIndex(index)}
-                    className={`w-2 h-2 rounded-full mx-1 transition-colors ${
-                      index === currentIndex ? 'bg-primary-600' : 'bg-gray-300'
+                    onClick={() => goToSlide(index)}
+                    className={`w-3 h-3 rounded-full mx-1 transition-all duration-200 hover:scale-125 ${
+                      index === currentIndex ? 'bg-primary-600 scale-125' : 'bg-gray-300 hover:bg-gray-400'
                     }`}
+                    aria-label={`Go to slide ${index + 1}`}
                   />
                 ))}
               </div>
             )}
+
+            {/* Mobile Navigation Dots */}
+            {courses.length > cardsToShow && (
+              <div className="flex justify-center mt-6 sm:hidden">
+                {Array.from({ length: Math.ceil(courses.length / cardsToShow) }).map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => goToSlide(index)}
+                    className={`w-2 h-2 rounded-full mx-1 transition-colors ${
+                      index === currentIndex ? 'bg-primary-600' : 'bg-gray-300'
+                    }`}
+                    aria-label={`Go to slide ${index + 1}`}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Keyboard navigation hint */}
+            <div className="text-center mt-4 text-xs text-gray-500">
+              <p>Use arrow keys to navigate • Spacebar to pause/resume</p>
+            </div>
           </div>
         </div>
       </section>

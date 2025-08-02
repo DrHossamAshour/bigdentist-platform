@@ -125,6 +125,9 @@ export default function Hero() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [cardsToShow, setCardsToShow] = useState(4)
   const [isAutoPlaying, setIsAutoPlaying] = useState(true)
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragStartX, setDragStartX] = useState(0)
+  const [dragOffset, setDragOffset] = useState(0)
 
   // Responsive card count
   useEffect(() => {
@@ -181,25 +184,25 @@ export default function Hero() {
 
   // Auto-slide functionality with pause on hover
   useEffect(() => {
-    if (!isAutoPlaying || courses.length <= cardsToShow) return
+    if (!isAutoPlaying || courses.length <= cardsToShow || isDragging) return
 
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % Math.max(1, courses.length - cardsToShow + 1))
-    }, 5000) // Changed from 6000 to 5000 for faster auto-sliding
+    }, 4000) // Faster auto-sliding for more active feel
 
     return () => clearInterval(interval)
-  }, [courses.length, cardsToShow, isAutoPlaying])
+  }, [courses.length, cardsToShow, isAutoPlaying, isDragging])
 
   // Progress indicator for auto-sliding
   const [progress, setProgress] = useState(0)
   
   useEffect(() => {
-    if (!isAutoPlaying || courses.length <= cardsToShow) {
+    if (!isAutoPlaying || courses.length <= cardsToShow || isDragging) {
       setProgress(0)
       return
     }
 
-    const duration = 5000 // 5 seconds
+    const duration = 4000 // 4 seconds
     const interval = 50 // Update every 50ms
     const steps = duration / interval
     let currentStep = 0
@@ -215,7 +218,7 @@ export default function Hero() {
     }, interval)
 
     return () => clearInterval(progressInterval)
-  }, [isAutoPlaying, currentIndex, courses.length, cardsToShow])
+  }, [isAutoPlaying, currentIndex, courses.length, cardsToShow, isDragging])
 
   // Keyboard navigation
   useEffect(() => {
@@ -250,6 +253,64 @@ export default function Hero() {
 
   const toggleAutoPlay = () => {
     setIsAutoPlaying(!isAutoPlaying)
+  }
+
+  // Touch/Drag handlers for mobile swipe
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true)
+    setDragStartX(e.clientX)
+    setDragOffset(0)
+  }
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return
+    const currentX = e.clientX
+    const diff = currentX - dragStartX
+    setDragOffset(diff)
+  }
+
+  const handleMouseUp = () => {
+    if (!isDragging) return
+    
+    if (Math.abs(dragOffset) > 100) {
+      if (dragOffset > 0) {
+        prevSlide()
+      } else {
+        nextSlide()
+      }
+    }
+    
+    setIsDragging(false)
+    setDragOffset(0)
+  }
+
+  // Touch handlers for mobile
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setIsDragging(true)
+    setDragStartX(e.touches[0].clientX)
+    setDragOffset(0)
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return
+    const currentX = e.touches[0].clientX
+    const diff = currentX - dragStartX
+    setDragOffset(diff)
+  }
+
+  const handleTouchEnd = () => {
+    if (!isDragging) return
+    
+    if (Math.abs(dragOffset) > 50) {
+      if (dragOffset > 0) {
+        prevSlide()
+      } else {
+        nextSlide()
+      }
+    }
+    
+    setIsDragging(false)
+    setDragOffset(0)
   }
 
   const getCardStyle = (index: number) => {
@@ -331,86 +392,107 @@ export default function Hero() {
               <>
                 <button
                   onClick={prevSlide}
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2 z-30 bg-white hover:bg-gray-50 border border-gray-200 rounded-full p-3 shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-110 group"
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 z-30 bg-white/90 hover:bg-white backdrop-blur-sm border border-gray-200/50 rounded-full p-4 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-110 group hover:-translate-x-1"
                   aria-label="Previous slide"
                 >
-                  <ChevronLeft className="w-5 h-5 text-gray-600 group-hover:text-primary-600" />
+                  <ChevronLeft className="w-6 h-6 text-gray-600 group-hover:text-primary-600 transition-colors" />
                 </button>
 
                 <button
                   onClick={nextSlide}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 z-30 bg-white hover:bg-gray-50 border border-gray-200 rounded-full p-3 shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-110 group"
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 z-30 bg-white/90 hover:bg-white backdrop-blur-sm border border-gray-200/50 rounded-full p-4 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-110 group hover:translate-x-1"
                   aria-label="Next slide"
                 >
-                  <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-primary-600" />
+                  <ChevronRight className="w-6 h-6 text-gray-600 group-hover:text-primary-600 transition-colors" />
                 </button>
 
                 {/* Auto-play toggle button */}
                 <button
                   onClick={toggleAutoPlay}
-                  className="absolute top-4 right-4 z-30 bg-white hover:bg-gray-50 border border-gray-200 rounded-full p-2 shadow-lg transition-all duration-200 hover:shadow-xl group"
+                  className="absolute top-4 right-4 z-30 bg-white/90 hover:bg-white backdrop-blur-sm border border-gray-200/50 rounded-full p-3 shadow-lg transition-all duration-300 hover:shadow-xl group hover:scale-110"
                   aria-label={isAutoPlaying ? 'Pause auto-slide' : 'Resume auto-slide'}
                 >
                   {isAutoPlaying ? (
-                    <div className="w-4 h-4 text-gray-600 group-hover:text-primary-600">
-                      <div className="w-1 h-4 bg-current rounded-sm mx-0.5 inline-block"></div>
-                      <div className="w-1 h-4 bg-current rounded-sm mx-0.5 inline-block"></div>
+                    <div className="w-5 h-5 text-gray-600 group-hover:text-primary-600 transition-colors">
+                      <div className="w-1 h-5 bg-current rounded-sm mx-0.5 inline-block"></div>
+                      <div className="w-1 h-5 bg-current rounded-sm mx-0.5 inline-block"></div>
                     </div>
                   ) : (
-                    <div className="w-4 h-4 text-gray-600 group-hover:text-primary-600">
-                      <div className="w-0 h-0 border-l-4 border-l-current border-t-2 border-t-transparent border-b-2 border-b-transparent ml-1"></div>
+                    <div className="w-5 h-5 text-gray-600 group-hover:text-primary-600 transition-colors">
+                      <div className="w-0 h-0 border-l-5 border-l-current border-t-3 border-t-transparent border-b-3 border-b-transparent ml-1"></div>
                     </div>
                   )}
                 </button>
+
+                {/* Slide counter */}
+                <div className="absolute bottom-4 left-4 z-30 bg-black/50 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-medium">
+                  {currentIndex + 1} / {Math.ceil(courses.length / cardsToShow)}
+                </div>
               </>
             )}
 
-            {/* Carousel Container with hover pause */}
+            {/* Carousel Container with hover pause and drag/swipe */}
             <div 
-              className="relative overflow-hidden rounded-2xl"
+              className="relative overflow-hidden rounded-2xl cursor-grab active:cursor-grabbing"
               onMouseEnter={() => setIsAutoPlaying(false)}
               onMouseLeave={() => setIsAutoPlaying(true)}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
             >
               {/* Progress indicator */}
               {isAutoPlaying && courses.length > cardsToShow && (
                 <div className="absolute top-0 left-0 right-0 h-1 bg-gray-200 z-20">
                   <div 
-                    className="h-full bg-primary-600 transition-all duration-50 ease-linear"
+                    className="h-full bg-gradient-to-r from-primary-500 to-secondary-500 transition-all duration-50 ease-linear"
                     style={{ width: `${progress}%` }}
                   />
                 </div>
               )}
 
+              {/* Infinite swipe effect - duplicate cards for seamless loop */}
               <div 
                 className="flex transition-transform duration-700 ease-in-out"
                 style={{
-                  transform: `translateX(-${currentIndex * (100 / cardsToShow)}%)`,
-                  width: `${courses.length * (100 / cardsToShow)}%`
+                  transform: `translateX(calc(-${currentIndex * (100 / cardsToShow)}% + ${dragOffset}px))`,
+                  width: `${(courses.length + cardsToShow) * (100 / cardsToShow)}%`
                 }}
               >
-                {courses.map((course, index) => (
-                  <div key={course.id} className={getCardStyle(index)}>
-                    <div className="bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700 rounded-2xl shadow-xl overflow-hidden border border-primary-400 h-full hover:shadow-2xl hover:scale-105 transition-all duration-300 cursor-pointer group">
+                {/* Duplicate first cards at the end for infinite effect */}
+                {courses.slice(-cardsToShow).map((course, index) => (
+                  <div key={`end-${course.id}`} className={getCardStyle(index - cardsToShow)}>
+                    <div className="bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700 rounded-2xl shadow-xl overflow-hidden border border-primary-400 h-full hover:shadow-2xl hover:scale-105 transition-all duration-300 cursor-pointer group transform hover:rotate-1">
                       {/* Course Image */}
                       <div className="h-48 bg-gray-200 relative overflow-hidden">
                         <img
                           src={course.image || course.thumbnail || 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=250&fit=crop'}
                           alt={course.title}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                           onError={(e) => {
                             e.currentTarget.src = 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=250&fit=crop'
                           }}
                         />
                         {/* Special Offer Badge */}
                         <div className="absolute top-4 left-4">
-                          <span className="bg-secondary-300 text-secondary-800 text-xs font-bold px-3 py-1 rounded-full shadow-sm">
+                          <span className="bg-secondary-300 text-secondary-800 text-xs font-bold px-3 py-1 rounded-full shadow-sm animate-pulse">
                             Special Offer
                           </span>
                         </div>
                         {/* Countdown Timer */}
-                        <div className="absolute bottom-4 left-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded-lg flex items-center gap-2">
+                        <div className="absolute bottom-4 left-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded-lg flex items-center gap-2 backdrop-blur-sm">
                           <Clock className="w-4 h-4" />
                           <span className="text-sm font-medium">{course.countdown || '25:00'} Hours</span>
+                        </div>
+                        {/* Hover overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          <div className="absolute bottom-4 right-4">
+                            <div className="bg-white/20 backdrop-blur-sm rounded-full p-2">
+                              <ArrowRight className="w-5 h-5 text-white" />
+                            </div>
+                          </div>
                         </div>
                       </div>
 
@@ -441,7 +523,147 @@ export default function Hero() {
                         )}
 
                         {/* Enroll Button */}
-                        <button className="w-full bg-gray-900 hover:bg-gray-800 text-white py-2 px-3 rounded-lg transition-colors text-xs font-medium shadow-sm group-hover:bg-secondary-600 group-hover:text-white">
+                        <button className="w-full bg-gray-900 hover:bg-gray-800 text-white py-2 px-3 rounded-lg transition-all duration-300 text-xs font-medium shadow-sm group-hover:bg-secondary-600 group-hover:text-white group-hover:scale-105 group-hover:shadow-lg">
+                          Enroll Now
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Main course cards */}
+                {courses.map((course, index) => (
+                  <div key={course.id} className={getCardStyle(index)}>
+                    <div className="bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700 rounded-2xl shadow-xl overflow-hidden border border-primary-400 h-full hover:shadow-2xl hover:scale-105 transition-all duration-300 cursor-pointer group transform hover:rotate-1">
+                      {/* Course Image */}
+                      <div className="h-48 bg-gray-200 relative overflow-hidden">
+                        <img
+                          src={course.image || course.thumbnail || 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=250&fit=crop'}
+                          alt={course.title}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          onError={(e) => {
+                            e.currentTarget.src = 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=250&fit=crop'
+                          }}
+                        />
+                        {/* Special Offer Badge */}
+                        <div className="absolute top-4 left-4">
+                          <span className="bg-secondary-300 text-secondary-800 text-xs font-bold px-3 py-1 rounded-full shadow-sm animate-pulse">
+                            Special Offer
+                          </span>
+                        </div>
+                        {/* Countdown Timer */}
+                        <div className="absolute bottom-4 left-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded-lg flex items-center gap-2 backdrop-blur-sm">
+                          <Clock className="w-4 h-4" />
+                          <span className="text-sm font-medium">{course.countdown || '25:00'} Hours</span>
+                        </div>
+                        {/* Hover overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          <div className="absolute bottom-4 right-4">
+                            <div className="bg-white/20 backdrop-blur-sm rounded-full p-2">
+                              <ArrowRight className="w-5 h-5 text-white" />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Course Content */}
+                      <div className="p-4">
+                        {/* Course Title */}
+                        <h3 className="text-lg font-bold text-white mb-2 leading-tight group-hover:text-secondary-200 transition-colors">
+                          {course.title}
+                        </h3>
+                        
+                        {/* Arabic Subtitle */}
+                        {course.subtitle && (
+                          <p className="text-xs text-gray-200 mb-3">
+                            {course.subtitle}
+                          </p>
+                        )}
+
+                        {/* Course Topics */}
+                        {course.topics && course.topics.length > 0 && (
+                          <ul className="mb-4 space-y-1">
+                            {course.topics.slice(0, 2).map((topic, index) => (
+                              <li key={index} className="flex items-center text-xs text-white">
+                                <span className="w-1.5 h-1.5 bg-white rounded-full mr-2"></span>
+                                {topic}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+
+                        {/* Enroll Button */}
+                        <button className="w-full bg-gray-900 hover:bg-gray-800 text-white py-2 px-3 rounded-lg transition-all duration-300 text-xs font-medium shadow-sm group-hover:bg-secondary-600 group-hover:text-white group-hover:scale-105 group-hover:shadow-lg">
+                          Enroll Now
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Duplicate last cards at the beginning for infinite effect */}
+                {courses.slice(0, cardsToShow).map((course, index) => (
+                  <div key={`start-${course.id}`} className={getCardStyle(index + courses.length)}>
+                    <div className="bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700 rounded-2xl shadow-xl overflow-hidden border border-primary-400 h-full hover:shadow-2xl hover:scale-105 transition-all duration-300 cursor-pointer group transform hover:rotate-1">
+                      {/* Course Image */}
+                      <div className="h-48 bg-gray-200 relative overflow-hidden">
+                        <img
+                          src={course.image || course.thumbnail || 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=250&fit=crop'}
+                          alt={course.title}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          onError={(e) => {
+                            e.currentTarget.src = 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=250&fit=crop'
+                          }}
+                        />
+                        {/* Special Offer Badge */}
+                        <div className="absolute top-4 left-4">
+                          <span className="bg-secondary-300 text-secondary-800 text-xs font-bold px-3 py-1 rounded-full shadow-sm animate-pulse">
+                            Special Offer
+                          </span>
+                        </div>
+                        {/* Countdown Timer */}
+                        <div className="absolute bottom-4 left-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded-lg flex items-center gap-2 backdrop-blur-sm">
+                          <Clock className="w-4 h-4" />
+                          <span className="text-sm font-medium">{course.countdown || '25:00'} Hours</span>
+                        </div>
+                        {/* Hover overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          <div className="absolute bottom-4 right-4">
+                            <div className="bg-white/20 backdrop-blur-sm rounded-full p-2">
+                              <ArrowRight className="w-5 h-5 text-white" />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Course Content */}
+                      <div className="p-4">
+                        {/* Course Title */}
+                        <h3 className="text-lg font-bold text-white mb-2 leading-tight group-hover:text-secondary-200 transition-colors">
+                          {course.title}
+                        </h3>
+                        
+                        {/* Arabic Subtitle */}
+                        {course.subtitle && (
+                          <p className="text-xs text-gray-200 mb-3">
+                            {course.subtitle}
+                          </p>
+                        )}
+
+                        {/* Course Topics */}
+                        {course.topics && course.topics.length > 0 && (
+                          <ul className="mb-4 space-y-1">
+                            {course.topics.slice(0, 2).map((topic, index) => (
+                              <li key={index} className="flex items-center text-xs text-white">
+                                <span className="w-1.5 h-1.5 bg-white rounded-full mr-2"></span>
+                                {topic}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+
+                        {/* Enroll Button */}
+                        <button className="w-full bg-gray-900 hover:bg-gray-800 text-white py-2 px-3 rounded-lg transition-all duration-300 text-xs font-medium shadow-sm group-hover:bg-secondary-600 group-hover:text-white group-hover:scale-105 group-hover:shadow-lg">
                           Enroll Now
                         </button>
                       </div>
@@ -453,13 +675,15 @@ export default function Hero() {
 
             {/* Desktop Navigation Dots */}
             {courses.length > cardsToShow && (
-              <div className="flex justify-center mt-6 hidden sm:flex">
+              <div className="flex justify-center mt-8 hidden sm:flex">
                 {Array.from({ length: Math.ceil(courses.length / cardsToShow) }).map((_, index) => (
                   <button
                     key={index}
                     onClick={() => goToSlide(index)}
-                    className={`w-3 h-3 rounded-full mx-1 transition-all duration-200 hover:scale-125 ${
-                      index === currentIndex ? 'bg-primary-600 scale-125' : 'bg-gray-300 hover:bg-gray-400'
+                    className={`w-4 h-4 rounded-full mx-2 transition-all duration-300 hover:scale-125 hover:shadow-lg ${
+                      index === currentIndex 
+                        ? 'bg-gradient-to-r from-primary-500 to-secondary-500 scale-125 shadow-lg' 
+                        : 'bg-gray-300 hover:bg-gray-400'
                     }`}
                     aria-label={`Go to slide ${index + 1}`}
                   />
@@ -474,8 +698,10 @@ export default function Hero() {
                   <button
                     key={index}
                     onClick={() => goToSlide(index)}
-                    className={`w-2 h-2 rounded-full mx-1 transition-colors ${
-                      index === currentIndex ? 'bg-primary-600' : 'bg-gray-300'
+                    className={`w-3 h-3 rounded-full mx-1 transition-all duration-300 ${
+                      index === currentIndex 
+                        ? 'bg-gradient-to-r from-primary-500 to-secondary-500 scale-125' 
+                        : 'bg-gray-300 hover:bg-gray-400'
                     }`}
                     aria-label={`Go to slide ${index + 1}`}
                   />
@@ -483,9 +709,23 @@ export default function Hero() {
               </div>
             )}
 
-            {/* Keyboard navigation hint */}
-            <div className="text-center mt-4 text-xs text-gray-500">
-              <p>Use arrow keys to navigate • Spacebar to pause/resume</p>
+            {/* Enhanced keyboard navigation hint */}
+            <div className="text-center mt-6 text-xs text-gray-500">
+              <p className="flex items-center justify-center gap-4">
+                <span className="flex items-center gap-1">
+                  <kbd className="px-2 py-1 bg-gray-100 rounded text-xs">←</kbd>
+                  <kbd className="px-2 py-1 bg-gray-100 rounded text-xs">→</kbd>
+                  Navigate
+                </span>
+                <span className="flex items-center gap-1">
+                  <kbd className="px-2 py-1 bg-gray-100 rounded text-xs">Space</kbd>
+                  Pause/Resume
+                </span>
+                <span className="flex items-center gap-1">
+                  <kbd className="px-2 py-1 bg-gray-100 rounded text-xs">Drag</kbd>
+                  Swipe
+                </span>
+              </p>
             </div>
           </div>
         </div>

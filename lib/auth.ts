@@ -99,6 +99,13 @@ export function getUserRole(): string | null {
     } else {
       console.log('No auth token found in cookies')
     }
+    
+    // Check if user is logged in but no role found
+    const isLoggedInFlag = localStorage.getItem('isLoggedIn') === 'true'
+    if (isLoggedInFlag) {
+      console.log('User is logged in but no role found, defaulting to STUDENT')
+      return 'STUDENT'
+    }
   } catch (e) {
     console.error('Error getting user role:', e)
   }
@@ -126,14 +133,26 @@ export function getDashboardUrl(): string {
 export function isLoggedIn(): boolean {
   if (typeof window === "undefined") return false;
   
-  // Check both localStorage and cookies
-  const localStorageLogin = localStorage.getItem('isLoggedIn') === 'true'
-  const hasAuthToken = document.cookie.includes('auth-token=')
-  const hasUserData = localStorage.getItem('userData') !== null
-  
-  console.log('Login check:', { localStorageLogin, hasAuthToken, hasUserData })
-  
-  return localStorageLogin || hasAuthToken || hasUserData
+  try {
+    // Check localStorage first
+    const localStorageLogin = localStorage.getItem('isLoggedIn') === 'true'
+    const hasUserData = localStorage.getItem('userData') !== null
+    
+    // Check cookies
+    const hasAuthToken = document.cookie.includes('auth-token=')
+    
+    console.log('Login check:', { localStorageLogin, hasAuthToken, hasUserData })
+    
+    // If any of these indicate login, return true
+    if (localStorageLogin || hasAuthToken || hasUserData) {
+      return true
+    }
+    
+    return false
+  } catch (e) {
+    console.error('Error checking login status:', e)
+    return false
+  }
 }
 
 export function handleLogout(): void {

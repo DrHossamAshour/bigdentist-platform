@@ -47,7 +47,13 @@ export default function Header() {
     // Check again after a short delay to ensure localStorage is updated
     const timer = setTimeout(checkAuth, 100)
     
-    return () => clearTimeout(timer)
+    // Also check every 2 seconds to catch any changes
+    const interval = setInterval(checkAuth, 2000)
+    
+    return () => {
+      clearTimeout(timer)
+      clearInterval(interval)
+    }
   }, [pathname]);
   
   // Normalize pathname: remove trailing slash
@@ -128,6 +134,19 @@ export default function Header() {
                 <Link 
                   href={dashboardUrl}
                   className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                  onClick={() => {
+                    // Force re-check before navigation
+                    const role = getUserRole()
+                    const url = getDashboardUrl()
+                    console.log('Dashboard button clicked - role:', role, 'url:', url)
+                    if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
+                      window.location.href = '/admin'
+                    } else if (role === 'INSTRUCTOR') {
+                      window.location.href = '/instructor/dashboard'
+                    } else {
+                      window.location.href = '/dashboard'
+                    }
+                  }}
                 >
                   {userRole ? `Dashboard (${userRole})` : 'Dashboard'}
                 </Link>
@@ -206,7 +225,20 @@ export default function Header() {
                     <Link 
                       href={dashboardUrl}
                       className="bg-primary-600 hover:bg-primary-700 text-white block w-full text-left px-3 py-2 rounded-lg text-base font-medium"
-                      onClick={() => setIsMenuOpen(false)}
+                      onClick={() => {
+                        setIsMenuOpen(false)
+                        // Force re-check before navigation
+                        const role = getUserRole()
+                        const url = getDashboardUrl()
+                        console.log('Mobile dashboard button clicked - role:', role, 'url:', url)
+                        if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
+                          window.location.href = '/admin'
+                        } else if (role === 'INSTRUCTOR') {
+                          window.location.href = '/instructor/dashboard'
+                        } else {
+                          window.location.href = '/dashboard'
+                        }
+                      }}
                     >
                       {userRole ? `Dashboard (${userRole})` : 'Dashboard'}
                     </Link>

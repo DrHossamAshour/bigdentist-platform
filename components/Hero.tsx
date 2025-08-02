@@ -138,8 +138,10 @@ export default function Hero() {
         setCardsToShow(2)
       } else if (window.innerWidth < 1024) {
         setCardsToShow(3)
-      } else {
+      } else if (window.innerWidth < 1280) {
         setCardsToShow(4)
+      } else {
+        setCardsToShow(5) // Show 5 cards on large screens
       }
     }
 

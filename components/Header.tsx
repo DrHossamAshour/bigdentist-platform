@@ -37,6 +37,9 @@ export default function Header() {
       console.log('Header - loggedIn:', isUserLoggedIn)
       console.log('Header - dashboardUrl:', url)
       console.log('Header - user role:', role)
+      console.log('Header - localStorage userData:', localStorage.getItem('userData'))
+      console.log('Header - localStorage isLoggedIn:', localStorage.getItem('isLoggedIn'))
+      console.log('Header - cookies:', document.cookie)
     }
     
     checkAuth()
@@ -137,6 +140,23 @@ export default function Header() {
               </>
             ) : (
               <>
+                <button
+                  onClick={() => {
+                    // Test button to simulate admin login
+                    localStorage.setItem('isLoggedIn', 'true')
+                    localStorage.setItem('userData', JSON.stringify({
+                      id: 'test-admin',
+                      email: 'admin@test.com',
+                      role: 'ADMIN',
+                      firstName: 'Test',
+                      lastName: 'Admin'
+                    }))
+                    window.location.reload()
+                  }}
+                  className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                >
+                  Test Admin Login
+                </button>
                 <Link 
                   href="/login"
                   className="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
@@ -198,6 +218,23 @@ export default function Header() {
                   </>
                 ) : (
                   <>
+                    <button
+                      onClick={() => {
+                        // Test button to simulate admin login
+                        localStorage.setItem('isLoggedIn', 'true')
+                        localStorage.setItem('userData', JSON.stringify({
+                          id: 'test-admin',
+                          email: 'admin@test.com',
+                          role: 'ADMIN',
+                          firstName: 'Test',
+                          lastName: 'Admin'
+                        }))
+                        window.location.reload()
+                      }}
+                      className="bg-yellow-600 hover:bg-yellow-700 text-white block w-full text-left px-3 py-2 rounded-lg text-base font-medium"
+                    >
+                      Test Admin Login
+                    </button>
                     <Link 
                       href="/login"
                       className="text-gray-700 hover:text-primary-600 block w-full text-left px-3 py-2 text-base font-medium"

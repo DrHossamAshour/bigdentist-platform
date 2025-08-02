@@ -442,7 +442,7 @@ export default function CourseDetailPage() {
                       ) : null}
                       <div className={`${course.thumbnail ? 'hidden' : ''} text-center`}>
                         <div className="text-6xl mb-4">📚</div>
-                        <p className="text-white text-lg mb-4">Select a lesson to start watching</p>
+                      <p className="text-white text-lg mb-4">Select a lesson to start watching</p>
                       </div>
                     </div>
                   </div>

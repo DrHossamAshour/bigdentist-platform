@@ -375,16 +375,16 @@ export default function Hero() {
 
   return (
     <>
-      <section className="bg-gradient-to-br from-primary-50 to-secondary-50 py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              New at BigDentist
-            </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Discover the latest courses and premium learning content
-            </p>
-          </div>
+    <section className="bg-gradient-to-br from-primary-50 to-secondary-50 py-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            New at BigDentist
+          </h2>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            Discover the latest courses and premium learning content
+          </p>
+        </div>
 
           {/* Course Carousel - Modern Card Swipe */}
           <div className="relative max-w-7xl mx-auto">
@@ -828,7 +828,7 @@ export default function Hero() {
                 </div>
               </div>
             ))}
-          </div>
+            </div>
 
           {/* View All Courses Button */}
           <div className="text-center">
@@ -838,9 +838,9 @@ export default function Hero() {
             >
               View All Courses
             </Link>
-          </div>
         </div>
-      </section>
+      </div>
+    </section>
     </>
   )
 } 

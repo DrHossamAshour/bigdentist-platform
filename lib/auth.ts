@@ -137,23 +137,24 @@ export function isLoggedIn(): boolean {
     // Check localStorage first
     const localStorageLogin = localStorage.getItem('isLoggedIn') === 'true'
     const userData = localStorage.getItem('userData')
-    const hasUserData = userData !== null && userData !== 'null' && userData !== 'undefined'
+    const hasUserData = userData !== null && userData !== 'null' && userData !== 'undefined' && userData !== ''
     
-    // Check cookies
-    const hasAuthToken = document.cookie.includes('auth-token=')
+    // Check cookies - be more specific about auth token
+    const hasAuthToken = document.cookie.includes('auth-token=') && document.cookie.includes('auth-token=eyJ')
     
     console.log('Login check:', { localStorageLogin, hasAuthToken, hasUserData, userData })
     
-    // Only return true if we have both localStorage login flag AND either userData or auth token
-    if (localStorageLogin && (hasUserData || hasAuthToken)) {
+    // Only return true if we have BOTH localStorage login flag AND valid userData AND valid auth token
+    if (localStorageLogin && hasUserData && hasAuthToken) {
       return true
     }
     
-    // If localStorage says logged in but no actual data, clear the invalid state
-    if (localStorageLogin && !hasUserData && !hasAuthToken) {
+    // If any part is missing, clear the invalid state
+    if (localStorageLogin && (!hasUserData || !hasAuthToken)) {
       console.log('Clearing invalid login state')
       localStorage.removeItem('isLoggedIn')
       localStorage.removeItem('userData')
+      return false
     }
     
     return false
@@ -173,7 +174,7 @@ export function handleLogout(): void {
     document.cookie = "auth-token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
     document.cookie = "auth-token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=";
     
-    // Clear all possible cookie variations
+    // Clear ALL cookies completely
     document.cookie.split(";").forEach(function(c) { 
       document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
     });
@@ -198,7 +199,7 @@ export function handleLogout(): void {
     sessionStorage.removeItem('auth');
     sessionStorage.removeItem('login');
     
-    // Clear any other possible auth-related items
+    // NUCLEAR OPTION: Clear everything
     localStorage.clear();
     sessionStorage.clear();
     
@@ -209,10 +210,18 @@ export function handleLogout(): void {
     
     // Force a complete page reload to clear any cached state
     window.location.replace("/login");
+    
+    // If that doesn't work, force a hard reload
+    setTimeout(() => {
+      window.location.href = "/login";
+      window.location.reload();
+    }, 100);
+    
   } catch (error) {
     console.error('Error during logout:', error)
     // Fallback: force redirect to login with page reload
     window.location.replace("/login");
+    window.location.reload();
   }
 }
 

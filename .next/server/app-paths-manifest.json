@@ -1,3 +1,3 @@
 {
-  "/page": "app/page.js"
+  "/api/setup-fresh/route": "app/api/setup-fresh/route.js"
 }

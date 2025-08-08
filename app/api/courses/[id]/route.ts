@@ -1,12 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyToken } from '@/lib/auth'
+import { validateRouteParam } from '@/lib/adminAuth'
 
 // GET /api/courses/[id] - Get single course
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  // Validate route parameter
+  const paramValidation = validateRouteParam(params.id, 'course id');
+  if (!paramValidation.isValid) {
+    return paramValidation.error!;
+  }
+
   try {
     const course = await prisma.course.findUnique({
       where: { id: params.id },

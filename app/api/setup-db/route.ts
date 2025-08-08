@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
+import { verifyAdminAuth } from '@/lib/adminAuth'
 
 const prisma = new PrismaClient()
 
 export async function GET(request: NextRequest) {
+  // Verify admin authentication
+  const authResult = verifyAdminAuth(request);
+  if (!authResult.success) {
+    return authResult.error!;
+  }
+
   try {
     console.log('Setting up database...')
     
@@ -26,6 +33,7 @@ export async function GET(request: NextRequest) {
     
     console.log('✅ Test user created:', testUser.email)
     
+    // SECURITY: Return safe user information without password
     return NextResponse.json({
       success: true,
       message: 'Database setup completed successfully',
@@ -41,7 +49,6 @@ export async function GET(request: NextRequest) {
     console.error('❌ Database setup failed:', error)
     return NextResponse.json(
       { 
-        success: false, 
         error: 'Database setup failed',
         details: error instanceof Error ? error.message : 'Unknown error'
       },

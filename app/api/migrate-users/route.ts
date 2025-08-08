@@ -1,17 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
+import { verifyAdminAuth } from '@/lib/adminAuth'
 
 const prisma = new PrismaClient()
 
 export async function GET(request: NextRequest) {
-  return await migrateUsers()
+  return await migrateUsers(request)
 }
 
 export async function POST(request: NextRequest) {
-  return await migrateUsers()
+  return await migrateUsers(request)
 }
 
-async function migrateUsers() {
+async function migrateUsers(request: NextRequest) {
+  // Verify admin authentication
+  const authResult = verifyAdminAuth(request);
+  if (!authResult.success) {
+    return authResult.error!;
+  }
+
   try {
     console.log('🔄 Starting user migration...')
     
@@ -45,9 +52,24 @@ async function migrateUsers() {
     
     console.log('✅ Student user created/updated:', studentUser.email)
     
+    // SECURITY: Return safe user information without passwords
     return NextResponse.json({
+      success: true,
       message: 'Users migrated successfully',
-      users: [adminUser.email, studentUser.email]
+      users: [
+        { 
+          email: adminUser.email, 
+          firstName: adminUser.firstName,
+          lastName: adminUser.lastName,
+          role: adminUser.role 
+        },
+        { 
+          email: studentUser.email, 
+          firstName: studentUser.firstName,
+          lastName: studentUser.lastName,
+          role: studentUser.role 
+        }
+      ]
     })
     
   } catch (error) {
